@@ -1,6 +1,8 @@
 #ifndef _POPUP_H_
 #define _POPUP_H_
 
+#include "globals.h"
+
 class popUp
 {
 private:

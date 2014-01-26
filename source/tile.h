@@ -1,6 +1,8 @@
 #ifndef _TILE_H_
 #define _TILE_H_
 
+#include "globals.h"
+
 class tile
 {
 private:
@@ -14,6 +16,7 @@ public:
 	tile ( int x = 0 , int y = 0 );
 	~tile ( void );
 
+	void draw ( void );
 
 	void setParameter ( string param );
 	void setType ( int type );
@@ -21,11 +24,8 @@ public:
 	string getParameter ( void );
 	int getType ( void );
 
-	void draw ( void );
-
 	void setCoordX ( int x );
 	void setCoordY ( int y );
 };
-
 
 #endif

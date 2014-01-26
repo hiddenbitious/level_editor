@@ -1,7 +1,3 @@
-#include <windows.h>
-#include <gl/gl.h>	
-#include <gl/glu.h>	
-#include "NeHeGL.h"	
 #include "popUp.h"
 
 popUp::popUp ( const vector<string>& options , bool returns )
@@ -76,16 +72,14 @@ void popUp::draw ( void )
 		}
 	glEnd ();
 
-	
-//Allign text
+   /// Allign text
 	if ( size_y < 0 ) fy = size_y * this->elements;
 	if ( size_x < 0 ) fx = size_x;
 
-//Print text
-	glColor3f ( 0.0 , 0.0 , 0.0 );
-	for ( i = 0 ; i < this->elements ; i++ )
-		glPrint ( x + fx , windowSize_y - y - 25*(i+1) + fy , "%s\n" , options[i].c_str () );
-
+   /// Print text
+	glColor3f (0.0f, 0.0f, 0.0f);
+	for(int i = 0; i < this->elements; i++)
+		glPrint(x + fx, windowSize_y - y - 25 * (i+1) + fy, "%s\n", options[i].c_str());
 }
 
 //Find over which option is the mouse pointer.

@@ -1,26 +1,19 @@
-#include <windows.h>
-#include <gl/gl.h>	
-#include <gl/glu.h>	
-#include "NeHeGL.h"	
-#include "popUp.h"
 #include "tile.h"
 
-
-tile::tile ( int _x , int _y ) : x ( _x ) , y ( _y ) , parameter ( "" ) , hasParameter ( false )
+tile::tile(int _x, int _y) :
+x(_x), y(_y), parameter(""), hasParameter(false)
 {
 }
 
-tile::~tile ( void )
+tile::~tile(void)
 {
 }
 
 void tile::setParameter ( string param )
 {
-//DO NOT ALLOW digits as parameters. It will mess up with the loader.
-	if ( param.size () )
-	{
-		if ( isdigit( param[0] ) )
-		{
+   /// DO NOT ALLOW digits as parameters. It will mess up with the loader.
+	if ( param.size () ) {
+		if ( isdigit( param[0] ) ) {
 			hasParameter = false;
 			this->parameter.clear ();
 			return;
@@ -29,14 +22,11 @@ void tile::setParameter ( string param )
 		hasParameter = true;
 		this->parameter = param;
 
-		for ( int i = 0 ; i < parameter.size () ; i++ )
-		{
+		for ( int i = 0 ; i < parameter.size () ; i++ ) {
 			if ( parameter[i] == '\n' )
 				parameter.erase ( i , 1 );
 		}
-	}
-	else
-	{
+	} else {
 		hasParameter = false;
 		this->parameter.clear ();
 	}
@@ -46,7 +36,7 @@ void tile::draw ( void )
 {
 	if ( this->type == 0 && this->hasParameter == false )
 		return;
-			
+
 	if ( this->type )
 		glColor3fv ( selections[this->type-1] );
 	else
