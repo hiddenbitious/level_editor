@@ -9,11 +9,11 @@ tile::~tile(void)
 {
 }
 
-void tile::setParameter ( string param )
+void tile::setParameter(string param)
 {
    /// DO NOT ALLOW digits as parameters. It will mess up with the loader.
-	if ( param.size () ) {
-		if ( isdigit( param[0] ) ) {
+	if(param.size ()) {
+		if(isdigit(param[0])) {
 			hasParameter = false;
 			this->parameter.clear ();
 			return;
@@ -22,8 +22,9 @@ void tile::setParameter ( string param )
 		hasParameter = true;
 		this->parameter = param;
 
-		for ( int i = 0 ; i < parameter.size () ; i++ ) {
-			if ( parameter[i] == '\n' )
+      /// Remove new line characters
+		for(int i = 0; i < parameter.size(); i++) {
+			if(parameter[i] == '\n')
 				parameter.erase ( i , 1 );
 		}
 	} else {
@@ -34,43 +35,39 @@ void tile::setParameter ( string param )
 
 void tile::draw ( void )
 {
-	if ( this->type == 0 && this->hasParameter == false )
+	if(this->type == 0 && this->hasParameter == false)
 		return;
 
-	if ( this->type )
-		glColor3fv ( selections[this->type-1] );
+	if(this->type)
+		glColor3fv(selections[this->type-1]);
 	else
-		glColor3f ( 0.9f , 0.9f , 0.9f );
+		glColor3f(0.9f, 0.9f, 0.9f);
 
-//Tiles with no parameters are drawn normally (lines)
-	if ( this->hasParameter == false )
-	{
-		glBegin ( GL_LINES );
-			glVertex2f ( x * tileSize		, y * tileSize );
-			glVertex2f ( (x+1) * tileSize	, y * tileSize );
+   /// Tiles with no parameters are drawn normally (lines)
+	if(this->hasParameter == false) {
+		glBegin(GL_LINES);
+			glVertex2f(x * tileSize		, y * tileSize );
+			glVertex2f((x+1) * tileSize, y * tileSize );
 
-			glVertex2f ( (x+1) * tileSize	, y * tileSize );
-			glVertex2f ( (x+1) * tileSize	, (y+1) * tileSize );
+			glVertex2f((x+1) * tileSize, y * tileSize );
+			glVertex2f((x+1) * tileSize, (y+1) * tileSize );
 
-			glVertex2f ( (x+1) * tileSize	, (y+1) * tileSize );
-			glVertex2f ( x * tileSize		, (y+1) * tileSize );
+			glVertex2f((x+1) * tileSize, (y+1) * tileSize );
+			glVertex2f(x * tileSize		, (y+1) * tileSize );
 
-			glVertex2f ( x * tileSize		, (y+1) * tileSize );
-			glVertex2f ( x * tileSize		, y * tileSize );
+			glVertex2f(x * tileSize		, (y+1) * tileSize );
+			glVertex2f(x * tileSize		, y * tileSize );
 
-			glVertex2f ( (x+1) * tileSize	, y * tileSize );
-			glVertex2f ( x * tileSize		, (y+1) * tileSize );
-		glEnd ();
-	}
-//The rest are drawn as solid quads
-	else
-	{
-		glBegin ( GL_QUADS );
-			glVertex2f ( x * tileSize		, y * tileSize );
-			glVertex2f ( (x+1) * tileSize	, y * tileSize );
-			glVertex2f ( (x+1) * tileSize	, (y+1) * tileSize );
-			glVertex2f ( x * tileSize		, (y+1) * tileSize );
-		glEnd ();
+			glVertex2f((x+1) * tileSize, y * tileSize );
+			glVertex2f(x * tileSize		, (y+1) * tileSize );
+		glEnd();
+	} else { /// The rest are drawn as solid quads
+		glBegin(GL_QUADS);
+			glVertex2f(x * tileSize		, y * tileSize );
+			glVertex2f((x+1) * tileSize, y * tileSize );
+			glVertex2f((x+1) * tileSize, (y+1) * tileSize );
+			glVertex2f(x * tileSize		, (y+1) * tileSize );
+		glEnd();
 	}
 }
 

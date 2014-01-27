@@ -38,7 +38,6 @@ bool showCommand = false;
 
 int windowSize_x = 800;
 int windowSize_y = 600;
-
 int mouse_x, mouse_y;
 
 /// Map dimensions
@@ -255,18 +254,15 @@ void Deinitialize (void)
 
 //void Selection(unsigned int mouseButton)
 //{
-//	static old_mouse_x , old_mouse_y;
+//	static old_mouse_x, old_mouse_y;
 //
 ////CTRL + S
-//	if ( g_keys->keyDown[VK_CONTROL] && mouseButton == char('S') )
-//	{
+//	if ( g_keys->keyDown[VK_CONTROL] && mouseButton == char('S') ) {
 //		saveMap ();
 //	}
 //
-//
 ////CTRL + L CLICK
-//	if ( g_keys->keyDown[VK_CONTROL] && mouseButton == LEFT )
-//	{
+//	if ( g_keys->keyDown[VK_CONTROL] && mouseButton == LEFT ) {
 //		old_mouse_x = mouseTile_x;
 //		old_mouse_y = mouseTile_y;
 //
@@ -276,62 +272,49 @@ void Deinitialize (void)
 //		enterCommand = true;
 //	}
 //
-//	if ( enterCommand == true )
-//	{
-//	//BackSpace
-//		if ( mouseButton == 8 )
-//		{
+//	if ( enterCommand == true ) {
+//	   //BackSpace
+//		if ( mouseButton == 8 ) {
 //			if ( command.size () )
 //				command.erase ( command.end () - 1 );
 //		}
-//	//key is :			a char (A-Z)					OR					a digit (0-9)				OR		spacebar
+//	   //key is :			a char (A-Z)					OR					a digit (0-9)				OR		spacebar
 //		else if ( ( mouseButton >= 65 && mouseButton <= 90 ) || ( mouseButton <= 57 && mouseButton >= 48 ) || mouseButton == 32 &&
-//					mouseButton != LEFT && mouseButton != MIDDLE && mouseButton != RIGHT )
-//		{
+//					mouseButton != LEFT && mouseButton != MIDDLE && mouseButton != RIGHT ) {
 //			command.push_back ( (char)mouseButton );
 //		}
-//	//Enter
-//		else if ( mouseButton == 13 )
-//		{
+//	   //Enter
+//		else if ( mouseButton == 13 ) {
 //			tiles[old_mouse_x][old_mouse_y].setParameter ( command );
 //			command.erase ();
 //			enterCommand = false;
 //		}
 //
-//	//Don't go any further
+//	   //Don't go any further
 //		return;
 //	}
 //
-//	if ( mouseButton == LEFT )
-//	{
-//		if ( popUps != NULL )
-//		{
-//			if ( popUps->hasOptions () )
+//	if(mouseButton == LEFT) {
+//		if(popUps != NULL){
+//			if(popUps->hasOptions())
 //				tileSelection = popUps->chooseOption ();
 //			delete popUps;
 //			popUps = NULL;
+//		} else {
+//			tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
+//			tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
+//			tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
 //		}
-//		else
-//		{
-//			tiles[mouseTile_x][mouseTile_y].setCoordX ( mouseTile_x );
-//			tiles[mouseTile_x][mouseTile_y].setCoordY ( mouseTile_y );
-//			tiles[mouseTile_x][mouseTile_y].setType ( tileSelection );
-//		}
-//	}
-//	else if ( mouseButton == RIGHT )
-//	{
-//			tiles[mouseTile_x][mouseTile_y].setType ( 0 );
-//			tiles[mouseTile_x][mouseTile_y].setParameter ( "" );
-//	}
-//	else if ( mouseButton == MIDDLE )
-//	{
-//		if ( popUps != NULL )
-//		{
+//	} else if ( mouseButton == RIGHT ) {
+//			tiles[mouseTile_x][mouseTile_y].setType(0);
+//			tiles[mouseTile_x][mouseTile_y].setParameter("");
+//	} else if ( mouseButton == MIDDLE ) {
+//		if(popUps != NULL){
 //			delete popUps;
 //			popUps = NULL;
 //		}
 //
-//		popUps = new popUp ( options , true );
+//		popUps = new popUp(options, true);
 //	}
 //}
 
@@ -351,15 +334,11 @@ void Draw(void)
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 
-//	RECT window;												// Storage For Window Dimensions
-//	GetClientRect (g_window->hWnd,&window);						// Get Window Dimensions
-
 	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
 	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
 
-
-//Automatically print parameters under mouse
-	if ( tiles[mouseTile_x][mouseTile_y].hasParameter == true && showCommand == false ) {
+   /// Automatically print parameters under mouse
+	if(tiles[mouseTile_x][mouseTile_y].hasParameter == true && showCommand == false ) {
 		showCommand = true;
 		command = tiles[mouseTile_x][mouseTile_y].getParameter ();
 	} else if ( tiles[mouseTile_x][mouseTile_y].hasParameter == false && showCommand == true ) {
@@ -376,37 +355,37 @@ void Draw(void)
 
 	glColor3f(0.0f, 0.0f, 0.0f);
 	glPrint(0, windowSize_y - 20, "Tile x: %i Tile y: %i Type: %i", mouseTile_x, mouseTile_y, tiles[mouseTile_x][mouseTile_y].getType());
-	if ( tileSelection > 0 ) {
-		glColor3fv ( selections[tileSelection-1] );
-		glPrint (0, windowSize_y - 40, "Current tile type: %s", options[tileSelection-1].c_str () );
+	if(tileSelection > 0) {
+		glColor3fv(selections[tileSelection-1]);
+		glPrint(0, windowSize_y - 40, "Current tile type: %s", options[tileSelection - 1].c_str());
 	} else {
-		glColor3f ( 0.0 , 0.0 , 0.0 );
-		glPrint ( 0 , windowSize_y-40 , "Current tile type: Erase" );
+		glColor3f(0.0f, 0.0f, 0.0f);
+		glPrint(0, windowSize_y - 40, "Current tile type: Erase");
 	}
 
-	glColor3f ( 0.0 , 0.0 , 0.0 );
-	glPrint ( 0 , windowSize_y-60 , "Tile size: %g" , tileSize );
+   glColor3f(0.0f, 0.0f, 0.0f);
+	glPrint(0, windowSize_y - 60, "Tile size: %g", tileSize);
 
    /// Field for messages
-	glColor3f ( 0.5 , 0.5 , 1.0 );
-	glBegin ( GL_QUADS );
-		glVertex2i ( 22 * tileSize , yTiles * tileSize );
-		glVertex2i ( windowSize_x , yTiles * tileSize );
-		glVertex2i ( windowSize_x , yTiles * tileSize + 20 );
-		glVertex2i ( 22 * tileSize , yTiles * tileSize + 20 );
-	glEnd ();
+	glColor3f(0.5f, 0.5f, 1.0f);
+	glBegin(GL_QUADS);
+		glVertex2i(22 * tileSize, yTiles * tileSize);
+		glVertex2i(windowSize_x, yTiles * tileSize);
+		glVertex2i(windowSize_x, yTiles * tileSize + 20);
+		glVertex2i(22 * tileSize, yTiles * tileSize + 20);
+	glEnd();
 
-//Print what the user is typing
+   /// Print what the user is typing
 	if ( enterCommand || showCommand ) {
-		glColor3f ( 0.0 , 0.0 , 0.0 );
+		glColor3f(0.0f, 0.0f, 0.0f);
 		glPrint ( 22 * tileSize , yTiles * tileSize + 2 , "Parameter: %s" , command.c_str () );
 	}
 
-//Prints a pop up under mouse with parameter for a tile
-	if ( showCommand && popUps == NULL )
-		popUps = new popUp ( tiles[mouseTile_x][mouseTile_y].getParameter () , false );
+   /// Prints a pop up under mouse with parameter for a tile
+	if(showCommand && popUps == NULL)
+		popUps = new popUp(tiles[mouseTile_x][mouseTile_y].getParameter(), false);
 
-	drawPopUps ( );
+	drawPopUps();
 
 ///Meh...keep windows' mouse.
 ///If you want to use to don't forget to load the texture in Initialize func and
@@ -417,7 +396,6 @@ void Draw(void)
 	glutSwapBuffers();
 }
 
-
 void drawGrid(void)
 {
    float x, y;
@@ -425,10 +403,11 @@ void drawGrid(void)
 	float h = yTiles * tileSize;
 	float step = tileSize / linesPerTile;
 
-	glBegin ( GL_LINES );
-	glColor3f ( 0.9f , 0.9f , 0.9f );
-//Draw thin lines
-//These are bound to loose precision
+	glBegin(GL_LINES);
+	glColor3f(0.9f, 0.9f, 0.9f);
+
+   /// Draw thin lines
+   /// These are bound to loose precision
 	for(y = 0; y < h; y += step )  {
 		glVertex3f(0, y, 0);
 		glVertex3f(w, y, 0);
@@ -439,28 +418,28 @@ void drawGrid(void)
 		glVertex3f(x, h, 0);
 	}
 
-//Draw bold lines
-	glColor3f ( 0.7f , 0.7f , 0.7f );
-	for ( x = 0 ; x < xTiles ; x++ ) {
-		for ( y = 0 ; y < yTiles ; y++) {
-			glVertex2f ( x * tileSize , y * tileSize );
-			glVertex2f ( (x+1) * tileSize , y * tileSize );
+   /// Draw bold lines
+	glColor3f(0.7f, 0.7f, 0.7f);
+	for(x = 0; x < xTiles; x++) {
+		for(y = 0; y < yTiles; y++) {
+			glVertex2f(x * tileSize, y * tileSize);
+			glVertex2f((x+1) * tileSize, y * tileSize);
 
-			glVertex2f ( (x+1) * tileSize , y * tileSize );
-			glVertex2f ( (x+1) * tileSize , (y+1) * tileSize );
+			glVertex2f((x+1) * tileSize, y * tileSize);
+			glVertex2f((x+1) * tileSize, (y+1) * tileSize);
 
-			glVertex2f ( (x+1) * tileSize , (y+1) * tileSize );
-			glVertex2f ( x * tileSize , (y+1) * tileSize );
+			glVertex2f((x+1) * tileSize, (y+1) * tileSize);
+			glVertex2f(x * tileSize, (y+1) * tileSize);
 
-			glVertex2f ( x * tileSize , (y+1) * tileSize );
-			glVertex2f ( x * tileSize , y * tileSize );
+			glVertex2f(x * tileSize, (y+1) * tileSize);
+			glVertex2f(x * tileSize, y * tileSize);
 		}
 	}
-	glEnd ();
+	glEnd();
 
    /// Draw marked tiles
-	for ( int tile_x = 0 ; tile_x < xTiles ; tile_x++ ) {
-		for ( int tile_y = 0 ; tile_y < yTiles ; tile_y++ ) {
+	for(int tile_x = 0; tile_x < xTiles; tile_x++) {
+		for(int tile_y = 0; tile_y < yTiles; tile_y++) {
 			tiles[tile_x][tile_y].draw ();
 		}
 	}
@@ -495,33 +474,33 @@ void saveMap ( void )
 	if ( fd == NULL )
 		return;
 
-//Count tiles
-	for ( x = 0 ; x < xTiles ; x++ ) {
-		for ( y = 0 ; y < yTiles ; y++ ) {
-			if ( tiles[x][y].getType () || tiles[x][y].hasParameter )
-				nTiles++;
+   /// Count tiles that either has a parameter or is not the default type
+	for(x = 0; x < xTiles; x++) {
+		for(y = 0; y < yTiles; y++) {
+			if(tiles[x][y].getType() || tiles[x][y].hasParameter)
+				++nTiles;
 		}
 	}
 
-	fprintf ( fd , "%d\n" , xTiles );			//Save x dimension
-	fprintf ( fd , "%d\n" , yTiles );			//Save y dimension
-	fprintf ( fd , "%d\n" , nTiles );			//Save how many tiles will be saved
-	fprintf ( fd , "%f\n" , tileSize );			//Save tile's dimensions
+	fprintf(fd, "%d\n", xTiles);			/// Save x dimension
+	fprintf(fd, "%d\n", yTiles);			/// Save y dimension
+	fprintf(fd, "%d\n", nTiles);			/// Save how many tiles will be saved
+	fprintf(fd, "%f\n", tileSize);		/// Save tile's dimensions
 
-	for ( x = 0 ; x < xTiles ; x++ ) {
-		for ( y = 0 ; y < yTiles ; y++ ) {
-		//Write only non zero tiles.
-			if ( tiles[x][y].getType () ) {
+	for(x = 0; x < xTiles; x++) {
+		for(y = 0; y < yTiles; y++) {
+		   /// Write only non zero tiles.
+			if(tiles[x][y].getType()) {
 				fprintf ( fd , "%d %d %d" , x , y , tiles[x][y].getType () );
 
 				if ( tiles[x][y].hasParameter )
 					fprintf ( fd , " %s\n" , tiles[x][y].getParameter ().c_str() );
 				else
 					fprintf ( fd , "\n" );
-			} else if ( tiles[x][y].hasParameter ) {
-      		//And the empty tiles with a parameter
-				fprintf ( fd , "%d %d %d" , x , y , 0 );
-				fprintf ( fd , " %s\n" , tiles[x][y].getParameter ().c_str() );
+			} else if(tiles[x][y].hasParameter) {
+      		/// And the empty tiles with a parameter
+				fprintf(fd, "%d %d %d", x, y, 0);
+				fprintf(fd, " %s\n", tiles[x][y].getParameter().c_str());
 			}
 		}
 	}
@@ -529,10 +508,10 @@ void saveMap ( void )
 	fclose ( fd );
 }
 
-bool readMap ( void )
+bool readMap(void)
 {
-	int _xTiles , _yTiles , _tileSize , tmp , nTiles , _x , _y;
-	int i , c;
+	int _xTiles, _yTiles, _tileSize, tmp, nTiles, _x, _y;
+	int i, c;
 	char buf[MAX_PARAMETER_LENGTH];
 
 	FILE *fd;
@@ -540,34 +519,34 @@ bool readMap ( void )
 	if ( (fd = fopen( "map.txt" , "r") ) == NULL )
 		return false;
 
-	fscanf ( fd , "%d" , &_xTiles );		//Read size on x.
-	fscanf ( fd , "%d" , &_yTiles );		//Read size on y.
-	fscanf ( fd , "%d" , &nTiles );			//Read number of tiles stored in file.
-	fscanf ( fd , "%f" , &_tileSize );		//Read tile size (not used).
+	fscanf(fd, "%d", &_xTiles);		/// Read size on x.
+	fscanf(fd, "%d", &_yTiles);		/// Read size on y.
+	fscanf(fd, "%d", &nTiles);		   /// Read number of tiles stored in file.
+	fscanf(fd, "%f", &_tileSize);	   /// Read tile size (not used).
 
-	xTiles = max ( _xTiles , xTiles );
-	yTiles = max ( _yTiles , yTiles );
+	xTiles = max(_xTiles, xTiles);
+	yTiles = max(_yTiles, yTiles);
 
-	for ( i = 0 ; i < nTiles ; i++ ) {
-		fscanf ( fd , "%d" , &_x );			//Read x coords
-		fscanf ( fd , "%d" , &_y );			//Read y coords
-		c = fscanf ( fd , "%d" , &tmp );	//Read tile type
+	for(i = 0; i < nTiles; i++) {
+		fscanf ( fd , "%d" , &_x );			/// Read x coords
+		fscanf ( fd , "%d" , &_y );			/// Read y coords
+		c = fscanf ( fd , "%d" , &tmp );	   /// Read tile type
 
-		tiles[_x][_y].setType ( tmp );
-		tiles[_x][_y].setCoordX ( _x );
-		tiles[_x][_y].setCoordY ( _y );
+		tiles[_x][_y].setType(tmp);
+		tiles[_x][_y].setCoordX(_x);
+		tiles[_x][_y].setCoordY(_y);
 
-	//There's a parameter. Read it.
-		if ( !c ) {
-		//fgets doesn't stop at white spaces but it stops at '\n'
-			fgets ( buf , MAX_PARAMETER_LENGTH , fd );
-			tiles[_x][_y].setParameter ( buf );
-		//One loop is lost everytime a parameter is read.
-			i--;
+   	/// There's a parameter. Read it.
+		if(!c) {
+		   /// fgets doesn't stop at white spaces but it stops at '\n'
+			fgets(buf, MAX_PARAMETER_LENGTH, fd);
+			tiles[_x][_y].setParameter(buf);
+		   /// One loop is lost everytime a parameter is read.
+			--i;
 		}
 	}
 
-	fclose ( fd );
+	fclose(fd);
 	return true;
 }
 
@@ -585,8 +564,8 @@ void reshape(int width, int height)									// Reshape The Window When It's Move
 	glMatrixMode (GL_MODELVIEW);										// Select The Modelview Matrix
 	glLoadIdentity();													// Reset The Modelview Matrix
 
-	//recalculate tileSize
-	tileSize = min((float)width / xTiles, (float)(height - 70) / yTiles);
+	/// recalculate tileSize
+	tileSize = MIN((float)width / xTiles, (float)(height - 70) / yTiles);
 }
 
 void idle(void)
