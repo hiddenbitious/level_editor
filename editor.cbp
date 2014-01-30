@@ -32,7 +32,15 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
-		<Unit filename="main.cpp" />
+		<Unit filename="Makefile" />
+		<Unit filename="source/NeHeGL.cpp" />
+		<Unit filename="source/NeHeGL.h" />
+		<Unit filename="source/editor.cpp" />
+		<Unit filename="source/globals.h" />
+		<Unit filename="source/popUp.cpp" />
+		<Unit filename="source/popUp.h" />
+		<Unit filename="source/tile.cpp" />
+		<Unit filename="source/tile.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />
