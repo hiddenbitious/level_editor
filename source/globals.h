@@ -5,7 +5,7 @@
 #include <string>
 
 #include <GL/glut.h>
-#include <GL/glu.h>
+//#include <GL/glu.h>
 
 using namespace std;
 

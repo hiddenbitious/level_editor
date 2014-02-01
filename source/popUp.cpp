@@ -1,10 +1,12 @@
 #include "popUp.h"
 
-popUp::popUp(const vector<string>& options, bool returns, int mouse_x, int mouse_y)
+popUp::popUp(const vector<string>& options, bool returns, int mouse_x, int mouse_y, int windowWidth, int windowHeight)
 {
 	this->options = options;
 	this->elements = options.size();
 	this->returns = returns;
+	this->windowWidth = windowWidth;
+	this->windowHeight = windowHeight;
 
 	size_y = 25;
 	size_x = 0;
@@ -19,18 +21,20 @@ popUp::popUp(const vector<string>& options, bool returns, int mouse_x, int mouse
 	y = mouse_y;
 
 	/// popUp is always drawn inside the window.
-	if(size_y * this->elements + y > windowSize_y)
+	if(size_y * this->elements + y > windowHeight)
 		y = y - size_y * this->elements;
 
-	if(size_x + x > windowSize_x)
+	if(size_x + x > windowWidth)
 		x = x - size_x;
 }
 
-popUp::popUp(const string& option, bool returns, int mouse_x, int mouse_y)
+popUp::popUp(const string& option, bool returns, int mouse_x, int mouse_y, int windowWidth, int windowHeight)
 {
 	this->returns = returns;
 	this->elements = 1;
 	this->options.push_back(option);
+	this->windowWidth = windowWidth;
+	this->windowHeight = windowHeight;
 
 	size_y = 25;
 	size_x = options[0].length();
@@ -42,9 +46,9 @@ popUp::popUp(const string& option, bool returns, int mouse_x, int mouse_y)
    /// must reverse menu because it is printed under mouse cursor...
 
 	/// popUp is always drawn inside the window.
-	if ( size_y * this->elements + y > windowSize_y )
+	if ( size_y * this->elements + y > windowHeight )
 		y = y - size_y * this->elements;
-	if ( size_x + x > windowSize_x )
+	if ( size_x + x > windowWidth )
 		x = x - size_x;
 }
 
@@ -65,10 +69,10 @@ void popUp::draw (int mouse_x, int mouse_y)
 			else
 				glColor4f(0.5f, 0.5f, 1.0f, 0.6f);
 
-			glVertex2i(x			, windowSize_y - y - size_y * i );
-			glVertex2i(x + size_x, windowSize_y - y - size_y * i );
-			glVertex2i(x + size_x, windowSize_y - y - size_y * (i+1) );
-			glVertex2i(x			, windowSize_y - y - size_y * (i+1) );
+			glVertex2i(x			, windowHeight - y - size_y * i );
+			glVertex2i(x + size_x, windowHeight - y - size_y * i );
+			glVertex2i(x + size_x, windowHeight - y - size_y * (i+1) );
+			glVertex2i(x			, windowHeight - y - size_y * (i+1) );
 		}
 	glEnd();
 
@@ -79,7 +83,7 @@ void popUp::draw (int mouse_x, int mouse_y)
    /// Print text
 	glColor3f (0.0f, 0.0f, 0.0f);
 	for(int i = 0; i < this->elements; i++)
-		glPrint(x + fx, windowSize_y - y - 25 * (i+1) + fy, "%s\n", options[i].c_str());
+		glPrint(x + fx, windowHeight - y - 25 * (i+1) + fy, "%s\n", options[i].c_str());
 }
 
 /// Find over which option is the mouse pointer.
@@ -99,3 +103,9 @@ int popUp::chooseOption(int mouse_x, int mouse_y)
 
 bool popUp::hasOptions(void)
 { return this->returns; }
+
+void popUp::setWindowDimensions(int w, int h)
+{
+   windowWidth = w;
+   windowHeight = h;
+}

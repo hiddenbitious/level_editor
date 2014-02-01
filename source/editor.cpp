@@ -319,11 +319,6 @@ Deinitialize (void)
 void
 update(void)
 {
-//   int keyModifiers = glutGetModifiers();
-
-  	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
-	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
-
 	printf("%s:: \n\tmouse_x: %d mouse_y: %d tile_x: %d tile_y: %d\n\t mouseButton: %d\n",
 	       __FUNCTION__, mouse_x, mouse_y, mouseTile_x, mouseTile_y, mouseButton);
 
@@ -338,7 +333,7 @@ update(void)
 			tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
 			tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
 		}
-	} else if(mouseButton == GLUT_RIGHT_BUTTON){
+	} else if(mouseButton == GLUT_RIGHT_BUTTON) {
 			tiles[mouseTile_x][mouseTile_y].setType(0);
 			tiles[mouseTile_x][mouseTile_y].setParameter("");
 	} else if(mouseButton == GLUT_MIDDLE_BUTTON) {
@@ -346,7 +341,7 @@ update(void)
 			delete popUps;
 			popUps = NULL;
 		}
-		popUps = new popUp(options, true, mouse_x, mouse_y);
+		popUps = new popUp(options, true, mouse_x, mouse_y, windowSize_x, windowSize_y);
 	}
 }
 
@@ -358,7 +353,11 @@ passiveMouseMove(int x, int y)
    mouse_x = x;
    mouse_y = y;
 
-   if(popUps)
+  	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
+	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
+
+   /// Redraw scene only when there is an active pop up
+   if(popUps || tiles[mouseTile_x][mouseTile_y].hasParameter)
       glutPostRedisplay();
 
    printf("%s:: x: %d y: %d  mouseButton: %d\n", __FUNCTION__, x, y, mouseButton);
@@ -371,7 +370,11 @@ mouseMove(int x, int y)
    mouse_x = x;
    mouse_y = y;
 
-   glutPostRedisplay();
+  	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
+	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
+
+   if(mouseButton != -1)
+      glutPostRedisplay();
 
    printf("%s:: x: %d y: %d  mouseButton: %d\n", __FUNCTION__, x, y, mouseButton);
 }
@@ -383,6 +386,9 @@ mouseClicks(int button, int state, int x, int y)
    mouse_x = x;
    mouse_y = y;
    mouseButton = state == GLUT_DOWN ? button : -1;
+
+  	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
+	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
 
    printf("%s: mb: %d state: %d x: %d y: %d\n", __FUNCTION__, button, state, mouse_x, mouse_y);
 
@@ -465,12 +471,12 @@ Draw(void)
 	glLoadIdentity();
 
    /// Automatically print parameters under mouse
-	if(tiles[mouseTile_x][mouseTile_y].hasParameter == true && showCommand == false ) {
+	if(tiles[mouseTile_x][mouseTile_y].hasParameter == true && !showCommand) {
 		showCommand = true;
 		command = tiles[mouseTile_x][mouseTile_y].getParameter ();
-	} else if ( tiles[mouseTile_x][mouseTile_y].hasParameter == false && showCommand == true ) {
+	} else if(tiles[mouseTile_x][mouseTile_y].hasParameter == false && showCommand) {
 		showCommand = false;
-		if ( popUps != NULL ) {
+		if(popUps != NULL) {
 			delete popUps;
 			popUps = NULL;
 		}
@@ -503,14 +509,14 @@ Draw(void)
 	glEnd();
 
    /// Print what the user is typing
-	if ( enterCommand || showCommand ) {
+	if(enterCommand || showCommand) {
 		glColor3f(0.0f, 0.0f, 0.0f);
 		glPrint ( 22 * tileSize , yTiles * tileSize + 2 , "Parameter: %s" , command.c_str () );
 	}
 
    /// Prints a pop up under mouse with parameter for a tile
 	if(showCommand && popUps == NULL)
-		popUps = new popUp(tiles[mouseTile_x][mouseTile_y].getParameter(), false, mouse_x, mouse_y);
+		popUps = new popUp(tiles[mouseTile_x][mouseTile_y].getParameter(), false, mouse_x, mouse_y, windowSize_x, windowSize_y);
 
 	drawPopUps();
 
@@ -698,6 +704,10 @@ reshape(int width, int height)									// Reshape The Window When It's Moved Or 
 
 	/// recalculate tileSize
 	tileSize = MIN((float)width / xTiles, (float)(height - 70) / yTiles);
+
+	/// Update any active pop up
+	if(popUps)
+	   popUps->setWindowDimensions(width, height);
 }
 
 int
