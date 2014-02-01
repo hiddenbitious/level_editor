@@ -15,9 +15,6 @@ using namespace std;
 GLvoid glPrint(GLint x, GLint y, const char *string, ...);		// Where The Printing Happens
 
 /// Globals
-extern int mouse_x;
-extern int mouse_y;
-
 extern int windowSize_x;
 extern int windowSize_y;
 

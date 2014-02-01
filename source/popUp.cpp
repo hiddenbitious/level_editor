@@ -1,6 +1,6 @@
 #include "popUp.h"
 
-popUp::popUp(const vector<string>& options, bool returns)
+popUp::popUp(const vector<string>& options, bool returns, int mouse_x, int mouse_y)
 {
 	this->options = options;
 	this->elements = options.size();
@@ -26,7 +26,7 @@ popUp::popUp(const vector<string>& options, bool returns)
 		x = x - size_x;
 }
 
-popUp::popUp(const string& option, bool returns)
+popUp::popUp(const string& option, bool returns, int mouse_x, int mouse_y)
 {
 	this->returns = returns;
 	this->elements = 1;
@@ -52,15 +52,15 @@ popUp::~popUp ( void )
 {
 }
 
-void popUp::draw ( void )
+void popUp::draw (int mouse_x, int mouse_y)
 {
 	int fy = 0;
 	int fx = 0;
 
    /// Draw popUp
 	glBegin(GL_QUADS);
-		for ( int i = 0 ; i < this->elements ; i++ ) {
-			if ( this->chooseOption() - 1 == i)
+		for(int i = 0; i < this->elements; i++) {
+			if(this->chooseOption(mouse_x, mouse_y) - 1 == i)
 				glColor4f(0.8f, 0.8f, 1.0f, 0.6f);	//Highlight selected option
 			else
 				glColor4f(0.5f, 0.5f, 1.0f, 0.6f);
@@ -83,7 +83,7 @@ void popUp::draw ( void )
 }
 
 /// Find over which option is the mouse pointer.
-int popUp::chooseOption(void)
+int popUp::chooseOption(int mouse_x, int mouse_y)
 {
 	if(!this->returns)
 		return 0;

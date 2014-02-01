@@ -15,13 +15,13 @@ private:
 public:
 	bool hasOptions(void);
 
-	popUp(const vector<string>& options, bool returns);
-	popUp(const string& option, bool returns);
+	popUp(const vector<string>& options, bool returns, int mouse_x, int mouse_y);
+	popUp(const string& option, bool returns, int mouse_x, int mouse_y);
 	~popUp();
 
-	void draw(void);
+	void draw(int mouse_x, int mouse_y);
 
-	int chooseOption(void);
+	int chooseOption(int mouse_x, int mouse_y);
 };
 
 #endif

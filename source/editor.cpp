@@ -1,15 +1,8 @@
-/**************************************
-*                                     *
-*   Jeff Molofee's Picking Tutorial   *
-*          nehe.gamedev.net           *
-*                2001                 *
-*                                     *
-**************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #include "globals.h"
 #include "popUp.h"
@@ -39,6 +32,7 @@ bool showCommand = false;
 int windowSize_x = 800;
 int windowSize_y = 600;
 int mouse_x, mouse_y;
+int mouseButtonComb = 0x0;
 
 /// Map dimensions
 int xTiles = 80;
@@ -58,16 +52,16 @@ typedef struct {
 
 TextureImage textures[2];						/// Storage For 10 Textures
 
-void drawPopUps ( void )
+void
+drawPopUps(void)
 {
-	if(popUps == NULL)
+	if(!popUps)
 		return;
-
-//	for ( int i = 0 ; i < popUps.size () ; i++ )
-		popUps->draw ();
+   popUps->draw(mouse_x, mouse_y);
 }
 
-bool LoadTGA(TextureImage *texture, char *filename)				// Loads A TGA File Into Memory
+bool
+LoadTGA(TextureImage *texture, char *filename)				// Loads A TGA File Into Memory
 {
 	GLubyte		TGAheader[12]={0,0,2,0,0,0,0,0,0,0,0,0};		// Uncompressed TGA Header
 	GLubyte		TGAcompare[12];									// Used To Compare TGA Header
@@ -147,7 +141,8 @@ bool LoadTGA(TextureImage *texture, char *filename)				// Loads A TGA File Into 
 }
 
 
-void BuildFont(void)										// Build Our Font Display List
+void
+BuildFont(void)										// Build Our Font Display List
 {
 	base=glGenLists(95);										// Creating 95 Display Lists
 	glBindTexture(GL_TEXTURE_2D, textures[9].texID);			// Bind Our Font Texture
@@ -168,7 +163,8 @@ void BuildFont(void)										// Build Our Font Display List
 	}															// Loop Until All 256 Are Built
 }
 
-void glPrint(GLint x, GLint y, const char *string, ...)		// Where The Printing Happens
+void
+glPrint(GLint x, GLint y, const char *string, ...)		// Where The Printing Happens
 {
 	char		text[256];										// Holds Our String
 	va_list		ap;												// Pointer To List Of Arguments
@@ -191,10 +187,9 @@ void glPrint(GLint x, GLint y, const char *string, ...)		// Where The Printing H
 	glDisable ( GL_TEXTURE_2D );
 }
 
-bool Initialize (void)
+bool
+Initialize (void)
 {
-   //	srand((unsigned)time(NULL ) );
-
 	if (//!LoadTGA(&textures[0],"Data/crosshair.tga") ||
 		(!LoadTGA(&textures[1],"Data/Font.tga"))) {
 		return false;
@@ -244,7 +239,8 @@ bool Initialize (void)
 	return true;
 }
 
-void Deinitialize (void)
+void
+Deinitialize (void)
 {
 	glDeleteLists(base,95);
 
@@ -252,7 +248,8 @@ void Deinitialize (void)
 		delete popUps;
 }
 
-//void Selection(unsigned int mouseButton)
+//void
+//Selection(unsigned int mouseButton)
 //{
 //	static old_mouse_x, old_mouse_y;
 //
@@ -318,6 +315,136 @@ void Deinitialize (void)
 //	}
 //}
 
+void
+update(void)
+{
+  	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
+	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
+
+	printf("%s:: mouse_x: %d mouse_y: %d tile_x: %d tile_y: %d\n",
+	       __FUNCTION__, mouse_x, mouse_y, mouseTile_x, mouseTile_y);
+
+	if(mouseButtonComb == GLUT_LEFT_BUTTON) {
+		if(popUps != NULL) {
+			if(popUps->hasOptions())
+				tileSelection = popUps->chooseOption(mouse_x, mouse_y);
+			delete popUps;
+			popUps = NULL;
+		} else {
+			tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
+			tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
+			tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
+		}
+	} else if(mouseButtonComb == GLUT_RIGHT_BUTTON){
+			tiles[mouseTile_x][mouseTile_y].setType(0);
+			tiles[mouseTile_x][mouseTile_y].setParameter("");
+	} else if(mouseButtonComb == GLUT_MIDDLE_BUTTON) {
+		if(popUps != NULL){
+			delete popUps;
+			popUps = NULL;
+		}
+
+		popUps = new popUp(options, true, mouse_x, mouse_y);
+	} else {
+	   assert(0);
+	}
+}
+
+
+/// Detect mouse coordinates every time the mouse moves
+void
+passiveMouseMove(int x, int y)
+{
+   mouse_x = x;
+   mouse_y = y;
+
+   if(popUps)
+      glutPostRedisplay();
+
+   printf("%s:: x: %d y: %d  mouseButtonComb: %d\n", __FUNCTION__, x, y, mouseButtonComb);
+}
+
+/// Detect mouse coordinates while a mouse button is being pressed
+void
+mouseMove(int x, int y)
+{
+   mouse_x = x;
+   mouse_y = y;
+
+   glutPostRedisplay();
+
+   printf("%s:: x: %d y: %d  mouseButtonComb: %d\n", __FUNCTION__, x, y, mouseButtonComb);
+}
+
+/// Detect mouse coordinates and mouse button when a mouse button is pressed
+void
+mouseClicks(int mouseButton, int state, int x, int y)
+{
+   mouse_x = x;
+   mouse_y = y;
+   mouseButtonComb = mouseButton;
+
+   printf("%s: mb: %d state: %d x: %d y: %d\n", __FUNCTION__, mouseButton, state, mouse_x, mouse_y);
+
+   glutPostRedisplay();
+//   int keyModifiers = glutGetModifiers();
+//
+//  	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
+//	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
+//
+//   switch(mouseButton) {
+//   case GLUT_LEFT_BUTTON:
+//		if(popUps != NULL) {
+//			if(popUps->hasOptions())
+//				tileSelection = popUps->chooseOption();
+//
+//			delete popUps;
+//			popUps = NULL;
+//		} else {
+//			tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
+//			tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
+//			tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
+//		}
+//		break;
+//
+//	case GLUT_RIGHT_BUTTON:
+//		tiles[mouseTile_x][mouseTile_y].setType(0);
+//		tiles[mouseTile_x][mouseTile_y].setParameter("");
+//		break;
+//
+//	case GLUT_MIDDLE_BUTTON:
+//		if(popUps) delete popUps;
+//		popUps = new popUp(options, true);
+//		break;
+//
+//   default:
+//      assert(0);
+//      break;
+//	}
+}
+
+/// Detect all keys with an ascii code
+void
+keyboardFunc(unsigned char key, int x, int y)
+{
+   switch(key) {
+   case 27:
+      Deinitialize();
+      exit(0);
+      break;
+
+      default:
+         printf("key pressed: %d\n", key);
+   }
+}
+
+/// Detect arrow keys, f1 - f12 etc
+void
+specialKeyboardFunc(int key, int x, int y)
+{
+
+}
+
 //void Update( GLint w , GLint h )
 //{
 //	if (g_keys->keyDown[VK_ESCAPE]) {
@@ -329,13 +456,13 @@ void Deinitialize (void)
 //	}
 //}
 
-void Draw(void)
+void
+Draw(void)
 {
+   update();
+
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-
-	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
-	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
 
    /// Automatically print parameters under mouse
 	if(tiles[mouseTile_x][mouseTile_y].hasParameter == true && showCommand == false ) {
@@ -383,7 +510,7 @@ void Draw(void)
 
    /// Prints a pop up under mouse with parameter for a tile
 	if(showCommand && popUps == NULL)
-		popUps = new popUp(tiles[mouseTile_x][mouseTile_y].getParameter(), false);
+		popUps = new popUp(tiles[mouseTile_x][mouseTile_y].getParameter(), false, mouse_x, mouse_y);
 
 	drawPopUps();
 
@@ -396,7 +523,8 @@ void Draw(void)
 	glutSwapBuffers();
 }
 
-void drawGrid(void)
+void
+drawGrid(void)
 {
    float x, y;
 	float w = xTiles * tileSize;
@@ -445,7 +573,8 @@ void drawGrid(void)
 	}
 }
 
-void drawMouse ( void )
+void
+drawMouse ( void )
 {
 	glEnable ( GL_TEXTURE_2D );
 	glEnable ( GL_ALPHA );
@@ -465,7 +594,8 @@ void drawMouse ( void )
 }
 
 
-void saveMap ( void )
+void
+saveMap ( void )
 {
 	int nTiles = 0 , x , y;
 
@@ -508,7 +638,8 @@ void saveMap ( void )
 	fclose ( fd );
 }
 
-bool readMap(void)
+bool
+readMap(void)
 {
 	int _xTiles, _yTiles, _tileSize, tmp, nTiles, _x, _y;
 	int i, c;
@@ -550,7 +681,8 @@ bool readMap(void)
 	return true;
 }
 
-void reshape(int width, int height)									// Reshape The Window When It's Moved Or Resized
+void
+reshape(int width, int height)									// Reshape The Window When It's Moved Or Resized
 {
 	windowSize_x = width;
 	windowSize_y = height;
@@ -568,12 +700,8 @@ void reshape(int width, int height)									// Reshape The Window When It's Move
 	tileSize = MIN((float)width / xTiles, (float)(height - 70) / yTiles);
 }
 
-void idle(void)
-{
-   glutPostRedisplay();
-}
-
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
 
@@ -590,14 +718,15 @@ int main(int argc, char **argv)
 
 	glutReshapeFunc(reshape);
 	glutDisplayFunc(Draw);
-//	glutPassiveMotionFunc(mouse_look);
-//	glutSpecialFunc(handle_arrows);
-//	glutKeyboardFunc(hande_simple_keys);
-	glutIdleFunc(idle);
 
-//	InitGLExtensions();
-//	CheckGLSL();
-//	Initializations();
+   /// Keyboard / mouse input
+	glutMouseFunc(mouseClicks);
+	glutPassiveMotionFunc(passiveMouseMove);
+	glutMotionFunc(mouseMove);
+
+	glutKeyboardFunc(keyboardFunc);
+	glutSpecialFunc(specialKeyboardFunc);
+
 
 	glutMainLoop();
 
