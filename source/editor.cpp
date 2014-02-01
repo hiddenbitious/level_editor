@@ -32,7 +32,7 @@ bool showCommand = false;
 int windowSize_x = 800;
 int windowSize_y = 600;
 int mouse_x, mouse_y;
-int mouseButtonComb = 0x0;
+int mouseButton = -1;
 
 /// Map dimensions
 int xTiles = 80;
@@ -245,7 +245,7 @@ Deinitialize (void)
 {
 	glDeleteLists(base,95);
 
-	if ( popUps != NULL )
+	if(popUps)
 		delete popUps;
 }
 
@@ -319,13 +319,15 @@ Deinitialize (void)
 void
 update(void)
 {
+//   int keyModifiers = glutGetModifiers();
+
   	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
 	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
 
-	printf("%s:: mouse_x: %d mouse_y: %d tile_x: %d tile_y: %d\n",
-	       __FUNCTION__, mouse_x, mouse_y, mouseTile_x, mouseTile_y);
+	printf("%s:: \n\tmouse_x: %d mouse_y: %d tile_x: %d tile_y: %d\n\t mouseButton: %d\n",
+	       __FUNCTION__, mouse_x, mouse_y, mouseTile_x, mouseTile_y, mouseButton);
 
-	if(mouseButtonComb == GLUT_LEFT_BUTTON) {
+	if(mouseButton == GLUT_LEFT_BUTTON) {
 		if(popUps != NULL) {
 			if(popUps->hasOptions())
 				tileSelection = popUps->chooseOption(mouse_x, mouse_y);
@@ -336,18 +338,15 @@ update(void)
 			tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
 			tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
 		}
-	} else if(mouseButtonComb == GLUT_RIGHT_BUTTON){
+	} else if(mouseButton == GLUT_RIGHT_BUTTON){
 			tiles[mouseTile_x][mouseTile_y].setType(0);
 			tiles[mouseTile_x][mouseTile_y].setParameter("");
-	} else if(mouseButtonComb == GLUT_MIDDLE_BUTTON) {
+	} else if(mouseButton == GLUT_MIDDLE_BUTTON) {
 		if(popUps != NULL){
 			delete popUps;
 			popUps = NULL;
 		}
-
 		popUps = new popUp(options, true, mouse_x, mouse_y);
-	} else {
-	   assert(0);
 	}
 }
 
@@ -362,7 +361,7 @@ passiveMouseMove(int x, int y)
    if(popUps)
       glutPostRedisplay();
 
-   printf("%s:: x: %d y: %d  mouseButtonComb: %d\n", __FUNCTION__, x, y, mouseButtonComb);
+   printf("%s:: x: %d y: %d  mouseButton: %d\n", __FUNCTION__, x, y, mouseButton);
 }
 
 /// Detect mouse coordinates while a mouse button is being pressed
@@ -374,18 +373,18 @@ mouseMove(int x, int y)
 
    glutPostRedisplay();
 
-   printf("%s:: x: %d y: %d  mouseButtonComb: %d\n", __FUNCTION__, x, y, mouseButtonComb);
+   printf("%s:: x: %d y: %d  mouseButton: %d\n", __FUNCTION__, x, y, mouseButton);
 }
 
 /// Detect mouse coordinates and mouse button when a mouse button is pressed
 void
-mouseClicks(int mouseButton, int state, int x, int y)
+mouseClicks(int button, int state, int x, int y)
 {
    mouse_x = x;
    mouse_y = y;
-   mouseButtonComb = mouseButton;
+   mouseButton = state == GLUT_DOWN ? button : -1;
 
-   printf("%s: mb: %d state: %d x: %d y: %d\n", __FUNCTION__, mouseButton, state, mouse_x, mouse_y);
+   printf("%s: mb: %d state: %d x: %d y: %d\n", __FUNCTION__, button, state, mouse_x, mouse_y);
 
    glutPostRedisplay();
 //   int keyModifiers = glutGetModifiers();
