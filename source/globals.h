@@ -3,14 +3,15 @@
 
 #include <vector>
 #include <string>
-
 #include <GL/glut.h>
-//#include <GL/glu.h>
 
 using namespace std;
 
-#define MIN(a,b)              (( a < b ) ? a : b)
-#define MAX(a,b)              (( a > b ) ? a : b)
+#define MAX_PARAMETER_LENGTH			256   /// Maximum length of a parameter.
+#define MAX_SELECTIONS                8   /// Number of different tile types
+
+#define MIN(a,b)                    (( a < b ) ? a : b)
+#define MAX(a,b)                    (( a > b ) ? a : b)
 
 GLvoid glPrint(GLint x, GLint y, const char *string, ...);		// Where The Printing Happens
 
@@ -22,6 +23,6 @@ extern float tileSize;
 extern int xTiles;
 extern int yTiles;
 
-extern float selections[8+1][3];					/// Hold the colors for each tile type
+extern float selections[MAX_SELECTIONS+1][3];			/// Hold the colors for each tile type
 
 #endif

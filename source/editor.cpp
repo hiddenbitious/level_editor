@@ -13,9 +13,6 @@ popUp *popUps = NULL;
 // User Defined Variables
 GLuint		base;									/// Font Display List
 
-#define MAX_PARAMETER_LENGTH			256   /// Maximum length of a parameter.
-#define MAX_SELECTIONS                8   /// Number of different tile types
-
 float tileSize = 10;						      /// Tile size (rectangle)
 int mouseTile_x, mouseTile_y;				   /// Which tile is the mouse over.
 tile tiles[80][50];							   /// Holds the tile data
@@ -252,28 +249,15 @@ drawPopUps(void)
 {
 	if(!popUps)
 		return;
+
    popUps->draw(mouse_x, mouse_y);
 }
-
-//void
-//Selection(unsigned int mouseButton)
-//{
-//	static old_mouse_x, old_mouse_y;
-//
-////CTRL + S
-//	if ( g_keys->keyDown[VK_CONTROL] && mouseButton == char('S') ) {
-//		saveMap ();
-//	}
-//}
 
 /// Update pop ups, tile updates etc
 void
 update(void)
 {
-   static int i = 0;
    static int old_mouse_x, old_mouse_y;
-
-	printf("%s(%d)::mouseButton: %d keyPressed: %d mod: %d\n", __FUNCTION__, i++, mouseButton, keyPressed, keyModifiers);
 
    /// Ctrl + left button = enter comment
    if(keyModifiers == GLUT_ACTIVE_CTRL && mouseButton == GLUT_LEFT_BUTTON) {
@@ -358,8 +342,6 @@ passiveMouseMove(int x, int y)
    /// mouse hovers over a tile with a parametere
    if(popUps || tiles[mouseTile_x][mouseTile_y].hasParameter)
       glutPostRedisplay();
-
-//   printf("%s:: x: %d y: %d  mouseButton: %d\n", __FUNCTION__, x, y, mouseButton);
 }
 
 /// Detect mouse coordinates while a mouse button is being pressed
@@ -377,8 +359,6 @@ mouseMove(int x, int y)
    /// Don't update screen if mouse moves but no button is pressed
    if(mouseButton != -1)
       glutPostRedisplay();
-
-//   printf("%s:: x: %d y: %d  mouseButton: %d\n", __FUNCTION__, x, y, mouseButton);
 }
 
 /// Detect mouse coordinates and mouse button when a mouse button is pressed
@@ -395,8 +375,6 @@ mouseClicks(int button, int state, int x, int y)
    mouseButton = state == GLUT_DOWN ? button : -1;
 
    keyModifiers = glutGetModifiers();
-
-//   printf("%s: mb: %d state: %d x: %d y: %d\n", __FUNCTION__, button, state, mouse_x, mouse_y);
 
    glutPostRedisplay();
 }
@@ -415,7 +393,6 @@ keyboardFunc(unsigned char key, int x, int y)
 
       default:
          keyPressed = key;
-         printf("key pressed: %d\n", key);
          glutPostRedisplay();
          break;
    }
@@ -426,13 +403,6 @@ keyboardUpFunc(unsigned char key, int x, int y)
 {
    /// Release key
    keyPressed = -1;
-}
-
-/// Detect arrow keys, f1 - f12 etc
-void
-specialKeyboardFunc(int key, int x, int y)
-{
-
 }
 
 void
@@ -549,26 +519,6 @@ drawGrid(void)
 	}
 }
 
-//void
-//drawMouse ( void )
-//{
-//	glEnable ( GL_TEXTURE_2D );
-//	glEnable ( GL_ALPHA );
-//	glTranslated(mouse_x, windowSize_y - mouse_y, 0.0f);
-//	glBindTexture(GL_TEXTURE_2D, textures[0].texID);
-//
-//	glColor3f ( 1.0f , 0.0f , 0.0f );
-//	glBegin(GL_QUADS);
-//		glTexCoord2f(0.0f,0.0f); glVertex2i(-crosshairSize , -crosshairSize );
-//		glTexCoord2f(1.0f,0.0f); glVertex2i( crosshairSize , -crosshairSize );
-//		glTexCoord2f(1.0f,1.0f); glVertex2i( crosshairSize , crosshairSize );
-//		glTexCoord2f(0.0f,1.0f); glVertex2i(-crosshairSize , crosshairSize );
-//	glEnd();
-//
-//	glDisable ( GL_TEXTURE_2D );
-//	glDisable ( GL_ALPHA );
-//}
-
 void
 saveMap ( void )
 {
@@ -657,19 +607,17 @@ readMap(void)
 }
 
 void
-reshape(int width, int height)									// Reshape The Window When It's Moved Or Resized
+reshape(int width, int height)
 {
 	windowSize_x = width;
 	windowSize_y = height;
 
-	glViewport(0, 0, (GLsizei)(width), (GLsizei)(height));				// Reset The Current Viewport
-	glMatrixMode(GL_PROJECTION);										// Select The Projection Matrix
-	glLoadIdentity();													// Reset The Projection Matrix
-//	gluPerspective (45.0f, (GLfloat)(width)/(GLfloat)(height),			// Calculate The Aspect Ratio Of The Window
-//					1.0f, 100.0f);
+	glViewport(0, 0, (GLsizei)(width), (GLsizei)(height));
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 	glOrtho(0, width, 0, height, -1, 1);
-	glMatrixMode (GL_MODELVIEW);										// Select The Modelview Matrix
-	glLoadIdentity();													// Reset The Modelview Matrix
+	glMatrixMode (GL_MODELVIEW);
+	glLoadIdentity();
 
 	/// recalculate tileSize
 	tileSize = MIN((float)width / xTiles, (float)(height - 70) / yTiles);
@@ -705,8 +653,6 @@ main(int argc, char **argv)
 
 	glutKeyboardFunc(keyboardFunc);
 	glutKeyboardUpFunc(keyboardUpFunc);
-	glutSpecialFunc(specialKeyboardFunc);
-
 
 	glutMainLoop();
 
