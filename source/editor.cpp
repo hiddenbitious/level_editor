@@ -190,8 +190,9 @@ glPrint(GLint x, GLint y, const char *string, ...)		// Where The Printing Happen
 bool
 Initialize (void)
 {
+   char fontFileName[] = {"Data/Font.tga"};
 	if (//!LoadTGA(&textures[0],"Data/crosshair.tga") ||
-		(!LoadTGA(&textures[1],"Data/Font.tga"))) {
+		(!LoadTGA(&textures[1], fontFileName))) {
 		return false;
 	}
 
@@ -712,7 +713,7 @@ main(int argc, char **argv)
 	glutInitWindowSize(windowSize_x, windowSize_y);
 	glutInitWindowPosition(100, 100);
 
-	int winID = glutCreateWindow("level editor");
+	glutCreateWindow("level editor");
 
    Initialize();
 
