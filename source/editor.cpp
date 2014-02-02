@@ -267,7 +267,7 @@ update(void)
 		tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
 		tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
 		command = tiles[mouseTile_x][mouseTile_y].getParameter();
-		tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
+//		tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
 		enterCommand = true;
 	}
 
@@ -574,7 +574,7 @@ readMap(void)
 
 	FILE *fd;
 
-	if ( (fd = fopen( "map.txt" , "r") ) == NULL )
+	if((fd = fopen( "map.txt" , "r")) == NULL)
 		return false;
 
 	fscanf(fd, "%d", &_xTiles);		/// Read size on x.
