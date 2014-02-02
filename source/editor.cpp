@@ -17,11 +17,11 @@ popUp *popUps = NULL;
 // User Defined Variables
 GLuint		base;									/// Font Display List
 
-float tileSize = 10;						      /// Tile size (rectangle)
+float tileSize = 10.0f;						      /// Tile size (rectangle)
 int mouseTile_x, mouseTile_y;				   /// Which tile is the mouse over.
 tile tiles[80][50];							   /// Holds the tile data
 int tileSelection = 1;						   /// Default tile type
-float selections[MAX_TILE_TYPES+1][3];    /// RGB colors of the available tile types
+//float selections[MAX_TILE_TYPES+1][3];    /// RGB colors of the available tile types
 vector<string> options;					      /// Text for the popUp.
 
 /// When entering a command set this to true
@@ -197,18 +197,6 @@ Initialize (void)
 //		tiles = new tile ( 0 , 0 ) [ TILES_ON_X * TILES_ON_Y ];
 //		ZeroMemory ( tiles , TILES_ON_X * TILES_ON_Y * sizeof ( tile ) );
 	}
-
-	/// Color for each tile type
-	selections[0][0] = 1.0f;	selections[0][1] = 0.0f;	selections[0][2] = 0.0f;	//Wall
-	selections[1][0] = 0.0f;	selections[1][1] = 1.0f;	selections[1][2] = 0.0f;	//Staircase
-	selections[2][0] = 0.0f;	selections[2][1] = 0.0f;	selections[2][2] = 1.0f;	//Door
-	selections[3][0] = 0.0f;	selections[3][1] = 0.0f;	selections[3][2] = 0.0f;	//Monster (type can be a parameter)
-	selections[4][0] = 1.0f;	selections[4][1] = 0.0f;	selections[4][2] = 1.0f;	//Whatever
-	selections[5][0] = 1.0f;	selections[5][1] = 1.0f;	selections[5][2] = 0.0f;
-	selections[6][0] = 0.0f;	selections[6][1] = 1.0f;	selections[6][2] = 1.0f;
-	selections[7][0] = 1.0f;	selections[7][1] = 1.0f;	selections[7][2] = 1.0f;
-   /// Tile type 0 with parameter.
-	selections[8][0] = 0.9f;	selections[8][1] = 0.9f;	selections[8][2] = 0.9f;
 
 	/// Text for the popUp window
 	options.push_back("Red" );
@@ -514,7 +502,7 @@ drawGrid(void)
    /// Draw marked tiles
 	for(int tile_x = 0; tile_x < TILES_ON_X; tile_x++) {
 		for(int tile_y = 0; tile_y < TILES_ON_Y; tile_y++) {
-			tiles[tile_x][tile_y].draw ();
+			tiles[tile_x][tile_y].draw(tileSize);
 		}
 	}
 }

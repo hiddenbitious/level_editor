@@ -33,7 +33,7 @@ void tile::setParameter(string param)
 	}
 }
 
-void tile::draw ( void )
+void tile::draw(float tileSize)
 {
 	if(this->type == 0 && this->hasParameter == false)
 		return;
