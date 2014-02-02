@@ -8,6 +8,10 @@
 #include "popUp.h"
 #include "tile.h"
 
+/// Map dimensions
+#define TILES_ON_X                   80
+#define TILES_ON_Y                   50
+
 popUp *popUps = NULL;
 
 // User Defined Variables
@@ -17,7 +21,7 @@ float tileSize = 10;						      /// Tile size (rectangle)
 int mouseTile_x, mouseTile_y;				   /// Which tile is the mouse over.
 tile tiles[80][50];							   /// Holds the tile data
 int tileSelection = 1;						   /// Default tile type
-float selections[MAX_SELECTIONS+1][3];    /// RGB colors of the available tile types
+float selections[MAX_TILE_TYPES+1][3];    /// RGB colors of the available tile types
 vector<string> options;					      /// Text for the popUp.
 
 /// When entering a command set this to true
@@ -36,10 +40,6 @@ int mouseButton = -1;
 /// Active key modifiers (ctrl, alt, shift)
 int keyModifiers = 0;
 unsigned char keyPressed;
-
-/// Map dimensions
-int xTiles = 80;
-int yTiles = 50;
 
 bool readMap(void);
 void saveMap(void);
@@ -194,8 +194,8 @@ Initialize (void)
 	BuildFont();
 
 	if ( !readMap() ) {
-//		tiles = new tile ( 0 , 0 ) [ xTiles * yTiles ];
-//		ZeroMemory ( tiles , xTiles * yTiles * sizeof ( tile ) );
+//		tiles = new tile ( 0 , 0 ) [ TILES_ON_X * TILES_ON_Y ];
+//		ZeroMemory ( tiles , TILES_ON_X * TILES_ON_Y * sizeof ( tile ) );
 	}
 
 	/// Color for each tile type
@@ -333,8 +333,8 @@ passiveMouseMove(int x, int y)
    mouse_x = x;
    mouse_y = y;
 
-  	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
-	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
+  	mouseTile_x = MIN(mouse_x / tileSize, TILES_ON_X - 1);
+	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, TILES_ON_Y - 1);
 
    keyModifiers = glutGetModifiers();
 
@@ -351,8 +351,8 @@ mouseMove(int x, int y)
    mouse_x = x;
    mouse_y = y;
 
-  	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
-	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
+  	mouseTile_x = MIN(mouse_x / tileSize, TILES_ON_X - 1);
+	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, TILES_ON_Y - 1);
 
    keyModifiers = glutGetModifiers();
 
@@ -368,8 +368,8 @@ mouseClicks(int button, int state, int x, int y)
    mouse_x = x;
    mouse_y = y;
 
-  	mouseTile_x = MIN(mouse_x / tileSize, xTiles - 1);
-	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, yTiles - 1);
+  	mouseTile_x = MIN(mouse_x / tileSize, TILES_ON_X - 1);
+	mouseTile_y = MIN((windowSize_y - mouse_y) / tileSize, TILES_ON_Y - 1);
 
    /// When button is released set mouseButton to no button
    mouseButton = state == GLUT_DOWN ? button : -1;
@@ -445,16 +445,16 @@ Draw(void)
    /// Field for messages
 	glColor3f(0.5f, 0.5f, 1.0f);
 	glBegin(GL_QUADS);
-		glVertex2i(22 * tileSize, yTiles * tileSize);
-		glVertex2i(windowSize_x, yTiles * tileSize);
-		glVertex2i(windowSize_x, yTiles * tileSize + 20);
-		glVertex2i(22 * tileSize, yTiles * tileSize + 20);
+		glVertex2i(22 * tileSize, TILES_ON_Y * tileSize);
+		glVertex2i(windowSize_x, TILES_ON_Y * tileSize);
+		glVertex2i(windowSize_x, TILES_ON_Y * tileSize + 20);
+		glVertex2i(22 * tileSize, TILES_ON_Y * tileSize + 20);
 	glEnd();
 
    /// Print what the user is typing
 	if(enterCommand || showCommand) {
 		glColor3f(0.0f, 0.0f, 0.0f);
-		glPrint(22 * tileSize, yTiles * tileSize + 2, "Parameter: %s", command.c_str());
+		glPrint(22 * tileSize, TILES_ON_Y * tileSize + 2, "Parameter: %s", command.c_str());
 	}
 
    /// Prints a pop up under mouse with parameter for a tile
@@ -473,8 +473,8 @@ drawGrid(void)
    /// Number of thin lines per tile (only 2 is accurate enough).
    static const int linesPerTile = 3;
    float x, y;
-	float w = xTiles * tileSize;
-	float h = yTiles * tileSize;
+	float w = TILES_ON_X * tileSize;
+	float h = TILES_ON_Y * tileSize;
 	float step = tileSize / linesPerTile;
 
 	glBegin(GL_LINES);
@@ -494,8 +494,8 @@ drawGrid(void)
 
    /// Draw bold lines
 	glColor3f(0.7f, 0.7f, 0.7f);
-	for(x = 0; x < xTiles; x++) {
-		for(y = 0; y < yTiles; y++) {
+	for(x = 0; x < TILES_ON_X; x++) {
+		for(y = 0; y < TILES_ON_Y; y++) {
 			glVertex2f(x * tileSize, y * tileSize);
 			glVertex2f((x+1) * tileSize, y * tileSize);
 
@@ -512,46 +512,46 @@ drawGrid(void)
 	glEnd();
 
    /// Draw marked tiles
-	for(int tile_x = 0; tile_x < xTiles; tile_x++) {
-		for(int tile_y = 0; tile_y < yTiles; tile_y++) {
+	for(int tile_x = 0; tile_x < TILES_ON_X; tile_x++) {
+		for(int tile_y = 0; tile_y < TILES_ON_Y; tile_y++) {
 			tiles[tile_x][tile_y].draw ();
 		}
 	}
 }
 
 void
-saveMap ( void )
+saveMap(void)
 {
 	int nTiles = 0, x, y;
 
 	FILE *fd = fopen("map.txt", "w");
 
-	if ( fd == NULL )
+	if(!fd)
 		return;
 
    /// Count tiles that either has a parameter or is not the default type
-	for(x = 0; x < xTiles; x++) {
-		for(y = 0; y < yTiles; y++) {
+	for(x = 0; x < TILES_ON_X; x++) {
+		for(y = 0; y < TILES_ON_Y; y++) {
 			if(tiles[x][y].getType() || tiles[x][y].hasParameter)
 				++nTiles;
 		}
 	}
 
-	fprintf(fd, "%d\n", xTiles);			/// Save x dimension
-	fprintf(fd, "%d\n", yTiles);			/// Save y dimension
+	fprintf(fd, "%d\n", TILES_ON_X);			/// Save x dimension
+	fprintf(fd, "%d\n", TILES_ON_Y);			/// Save y dimension
 	fprintf(fd, "%d\n", nTiles);			/// Save how many tiles will be saved
 	fprintf(fd, "%f\n", tileSize);		/// Save tile's dimensions
 
-	for(x = 0; x < xTiles; x++) {
-		for(y = 0; y < yTiles; y++) {
+	for(x = 0; x < TILES_ON_X; x++) {
+		for(y = 0; y < TILES_ON_Y; y++) {
 		   /// Write only non zero tiles.
 			if(tiles[x][y].getType()) {
-				fprintf ( fd , "%d %d %d" , x , y , tiles[x][y].getType () );
+				fprintf(fd, "%d %d %d", x, y, tiles[x][y].getType());
 
 				if ( tiles[x][y].hasParameter )
-					fprintf ( fd , " %s\n" , tiles[x][y].getParameter ().c_str() );
+					fprintf(fd, " %s\n", tiles[x][y].getParameter().c_str());
 				else
-					fprintf ( fd , "\n" );
+					fprintf(fd, "\n");
 			} else if(tiles[x][y].hasParameter) {
       		/// And the empty tiles with a parameter
 				fprintf(fd, "%d %d %d", x, y, 0);
@@ -560,7 +560,9 @@ saveMap ( void )
 		}
 	}
 
-	fclose ( fd );
+	fclose(fd);
+
+	printf("map saved.\n");
 }
 
 bool
@@ -580,13 +582,17 @@ readMap(void)
 	fscanf(fd, "%d", &nTiles);		   /// Read number of tiles stored in file.
 	fscanf(fd, "%f", &_tileSize);	   /// Read tile size (not used).
 
-	xTiles = max(_xTiles, xTiles);
-	yTiles = max(_yTiles, yTiles);
+   assert(_xTiles == TILES_ON_X);
+   assert(_yTiles == TILES_ON_Y);
+   assert(nTiles <= TILES_ON_X * TILES_ON_Y);
 
 	for(i = 0; i < nTiles; i++) {
-		fscanf ( fd , "%d" , &_x );			/// Read x coords
-		fscanf ( fd , "%d" , &_y );			/// Read y coords
-		c = fscanf ( fd , "%d" , &tmp );	   /// Read tile type
+		fscanf(fd, "%d", &_x);			/// Read x coords
+		fscanf(fd, "%d", &_y);			/// Read y coords
+		c = fscanf(fd, "%d", &tmp);	/// Read tile type
+		assert(_x < TILES_ON_X);
+		assert(_y < TILES_ON_Y);
+		assert(tmp <= MAX_TILE_TYPES);
 
 		tiles[_x][_y].setType(tmp);
 		tiles[_x][_y].setCoordX(_x);
@@ -620,7 +626,7 @@ reshape(int width, int height)
 	glLoadIdentity();
 
 	/// recalculate tileSize
-	tileSize = MIN((float)width / xTiles, (float)(height - 70) / yTiles);
+	tileSize = MIN((float)width / TILES_ON_X, (float)(height - 70) / TILES_ON_Y);
 
 	/// Update any active pop up
 	if(popUps)

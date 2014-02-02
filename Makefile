@@ -1,5 +1,5 @@
 CC=clang++
-CFLAGS=-c -Wall -O0 -g
+CFLAGS=-c -Wall -O3
 
 LDFLAGS=-lm -lGL -lglut -lGLU
 
