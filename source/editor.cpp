@@ -44,6 +44,7 @@ unsigned char keyPressed;
 bool readMap(void);
 void saveMap(void);
 void drawGrid(void);
+void mergeTiles(/*vector<mergedTile_t> &mergedTiles*/ void);
 
 typedef struct {
 	GLubyte	*imageData;							/// Image Data (Up To 32 Bits)
@@ -259,9 +260,19 @@ update(void)
 		enterCommand = true;
 	}
 
-	/// Ctrl + s/S
-	if(keyModifiers == GLUT_ACTIVE_CTRL && keyPressed == 19 && !enterCommand) {
-      saveMap();
+   /// CTRL key is pressed
+	if(keyModifiers == GLUT_ACTIVE_CTRL && !enterCommand) {
+	   switch(keyPressed) {
+   	/// Ctrl + s
+	   case 19:
+         saveMap();
+         break;
+
+     	/// Ctrl + m
+      case 13:
+         mergeTiles();
+         break;
+      }
 	}
 
 	if(enterCommand) {
@@ -381,6 +392,7 @@ keyboardFunc(unsigned char key, int x, int y)
 
       default:
          keyPressed = key;
+//         printf("Key pressed: %d\n", key);
          glutPostRedisplay();
          break;
    }
@@ -619,6 +631,108 @@ reshape(int width, int height)
 	/// Update any active pop up
 	if(popUps)
 	   popUps->setWindowDimensions(width, height);
+}
+
+typedef struct {
+   /// Tile center
+   int x, y;
+   /// Tile size
+   int width, height;
+} mergedTile_t;
+
+void
+secondPass(vector<mergedTile_t> &mergedTiles)
+{
+   vector<mergedTile_t>::iterator itx;
+   vector<mergedTile_t>::iterator ity;
+
+   for(itx = mergedTiles.begin(); itx < mergedTiles.end(); itx++) {
+      for(ity = mergedTiles.begin(); ity < mergedTiles.end(); ity++) {
+         /// Merge rows
+         if((*itx).y + 1 == (*ity).y &&
+            (*itx).x == (*ity).x &&
+            (*itx).width == (*ity).width) {
+            (*itx).height += (*ity).height;
+            mergedTiles.erase(ity);
+         } /// Merge collums
+         else if((*itx).x + 1 == (*ity).x &&
+            (*itx).y == (*ity).y &&
+            (*itx).height == (*ity).height) {
+            (*itx).width += (*ity).width;
+            mergedTiles.erase(ity);
+         }
+      }
+   }
+}
+
+void
+firstPass(int x, int y, bool **visitedTiles, vector<mergedTile_t> &mergedTiles)
+{
+   int xx = x, yy = y;
+   int width = 1, height = 1;
+   mergedTile_t merged = {x, y, width, height};
+
+   /// Mark start tile as visited
+   visitedTiles[xx][yy] = true;
+
+   /// Scan row
+   if(yy == TILES_ON_Y - 1 || tiles[xx + 1][yy].getType() == TILE_WALL) {
+      while(tiles[xx + 1][yy].getType() == TILE_WALL && xx <= TILES_ON_X - 2) {
+         xx++;
+         width++;
+         visitedTiles[xx][yy] = true;
+      }
+
+      merged.width = width;
+   } else if(xx == TILES_ON_X - 1 || tiles[xx][yy + 1].getType() == TILE_WALL) {
+      /// ... else scan the column
+      while(tiles[xx][yy + 1].getType() == TILE_WALL && yy <= TILES_ON_Y - 2) {
+         yy++;
+         height++;
+         visitedTiles[xx][yy] = true;
+      }
+
+      merged.height = height;
+   }
+
+   mergedTiles.push_back(merged);
+}
+
+void
+mergeTiles(/*vector<mergedTile_t> &mergedTiles*/ void)
+{
+   int x, y;
+   vector<mergedTile_t> mergedTiles(0);
+
+   /// initialize
+   bool **visitedTiles = new bool *[TILES_ON_X];
+   for(x = 0; x < TILES_ON_X; x++) {
+      visitedTiles[x] = new bool[TILES_ON_Y];
+      memset((void *)visitedTiles[x], false, sizeof(bool) * TILES_ON_Y);
+   }
+
+   /// Scan all tiles
+   for(x = 0; x < TILES_ON_X; x++) {
+      for(y = 0; y < TILES_ON_Y; y++) {
+         if(tiles[x][y].getType() == TILE_WALL && visitedTiles[x][y] == false)
+            firstPass(x, y, visitedTiles, mergedTiles);
+      }
+   }
+
+   /// Print merged tiles after 1st pass
+   for(x = 0; x < mergedTiles.size(); ++x)
+      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
+
+   /// Try to merge more
+   secondPass(mergedTiles);
+
+   /// Print merged tiles after 2nd pass
+   for(x = 0; x < mergedTiles.size(); ++x)
+      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
+
+   for(x = 0; x < TILES_ON_X; x++)
+      delete[] visitedTiles[x];
+   delete[] visitedTiles;
 }
 
 int
