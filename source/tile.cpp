@@ -70,18 +70,3 @@ void tile::draw(float tileSize)
 		glEnd();
 	}
 }
-
-void tile::setCoordX ( int x )
-{ this->x = x; }
-
-void tile::setCoordY ( int y )
-{ this->y = y; }
-
-void tile::setType ( int type )
-{ this->type = type; }
-
-string tile::getParameter ( void )
-{ return this->parameter; }
-
-int tile::getType ( void )
-{ return this->type; }
