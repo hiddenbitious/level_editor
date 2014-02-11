@@ -649,17 +649,19 @@ secondPass(vector<mergedTile_t> &mergedTiles)
    for(itx = mergedTiles.begin(); itx < mergedTiles.end(); itx++) {
       for(ity = mergedTiles.begin(); ity < mergedTiles.end(); ity++) {
          /// Merge rows
-         if((*itx).y + 1 == (*ity).y &&
+         if((*itx).y + (*itx).height == (*ity).y &&
             (*itx).x == (*ity).x &&
             (*itx).width == (*ity).width) {
             (*itx).height += (*ity).height;
             mergedTiles.erase(ity);
+            --itx;
          } /// Merge collums
-         else if((*itx).x + 1 == (*ity).x &&
+         else if((*itx).x + (*itx).width == (*ity).x &&
             (*itx).y == (*ity).y &&
             (*itx).height == (*ity).height) {
             (*itx).width += (*ity).width;
             mergedTiles.erase(ity);
+            --itx;
          }
       }
    }
@@ -701,7 +703,7 @@ firstPass(int x, int y, bool **visitedTiles, vector<mergedTile_t> &mergedTiles)
 void
 mergeTiles(/*vector<mergedTile_t> &mergedTiles*/ void)
 {
-   int x, y;
+   int x, y, wallTiles = 0, wallTiles2;
    vector<mergedTile_t> mergedTiles(0);
 
    /// initialize
@@ -709,6 +711,13 @@ mergeTiles(/*vector<mergedTile_t> &mergedTiles*/ void)
    for(x = 0; x < TILES_ON_X; x++) {
       visitedTiles[x] = new bool[TILES_ON_Y];
       memset((void *)visitedTiles[x], false, sizeof(bool) * TILES_ON_Y);
+   }
+
+   /// Count wall tiles
+   for(x = 0; x < TILES_ON_X; x++) {
+      for(y = 0; y < TILES_ON_Y; y++) {
+         if(tiles[x][y].getType() == TILE_WALL) wallTiles++;
+      }
    }
 
    /// Scan all tiles
@@ -719,6 +728,8 @@ mergeTiles(/*vector<mergedTile_t> &mergedTiles*/ void)
       }
    }
 
+   wallTiles2 = mergedTiles.size();
+
    /// Print merged tiles after 1st pass
    for(x = 0; x < mergedTiles.size(); ++x)
       printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
@@ -727,8 +738,14 @@ mergeTiles(/*vector<mergedTile_t> &mergedTiles*/ void)
    secondPass(mergedTiles);
 
    /// Print merged tiles after 2nd pass
+   printf("\n\n");
    for(x = 0; x < mergedTiles.size(); ++x)
       printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
+
+   printf("Map merged:\n");
+   printf("\tInitial wall tiles: %d\n", wallTiles);
+   printf("\tWall tiles after 1st pass: %d\n", wallTiles2);
+   printf("\tWall tiles after 2nd pass: %d\n", mergedTiles.size());
 
    for(x = 0; x < TILES_ON_X; x++)
       delete[] visitedTiles[x];
