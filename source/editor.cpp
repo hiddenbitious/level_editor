@@ -17,10 +17,10 @@ popUp *popUps = NULL;
 // User Defined Variables
 GLuint		base;									/// Font Display List
 
-float tileSize = 10.0f;						      /// Tile size (rectangle)
+float tileSize = 10.0f;						   /// Tile size (rectangle)
 int mouseTile_x, mouseTile_y;				   /// Which tile is the mouse over.
-tile tiles[80][50];							   /// Holds the tile data
-int tileSelection = 1;						   /// Default tile type
+tile tiles[TILES_ON_X][TILES_ON_Y];		   /// Holds the tile data
+int tileSelection = TILE_WALL;				/// Default tile type
 //float selections[MAX_TILE_TYPES+1][3];    /// RGB colors of the available tile types
 vector<string> options;					      /// Text for the popUp.
 
@@ -328,7 +328,7 @@ passiveMouseMove(int x, int y)
 
    /// Redraw scene only when there is an active pop up or
    /// mouse hovers over a tile with a parametere
-   if(popUps || tiles[mouseTile_x][mouseTile_y].hasParameter)
+//   if(popUps || tiles[mouseTile_x][mouseTile_y].hasParameter)
       glutPostRedisplay();
 }
 
@@ -345,7 +345,7 @@ mouseMove(int x, int y)
    keyModifiers = glutGetModifiers();
 
    /// Don't update screen if mouse moves but no button is pressed
-   if(mouseButton != -1)
+//   if(mouseButton != -1)
       glutPostRedisplay();
 }
 
