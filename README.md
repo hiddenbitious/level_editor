@@ -14,3 +14,6 @@ Controls:
 
 Uses OpenGL + glut for rendering the map and the text so i supposed it can be considered as cross platform. 
 For now the map size is fixed at 80 x 50 tiles.
+
+TODO:
+Use cegui (http://cegui.org.uk/) to create a rich user interface.
