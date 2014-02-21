@@ -757,7 +757,11 @@ void
 saveGeometryToFile(void)
 {
    const int verticesPerPoly = 4;
+   const int nBrushes = 1;
+
    C_Vertex v1, v2, v3, v0;
+   C_TexCoord center;
+   C_TexCoord halfDims;
 
    /// Merge tiles
    vector<mergedTile_t> mergedTiles(0);
@@ -765,24 +769,10 @@ saveGeometryToFile(void)
 
    /// Count wall tiles in map
    int nWalls = mergedTiles.size();
-
-   /// Allocate raw polys
-   /// 4 faces for each wall + 1 for top/roof
    int nPolys = nWalls * 5;
-   poly_t** pRawPolys = new poly_t *[nPolys];
-   /// Use just one brush
-   int nBrushes = 1;
-   brush_t* pBrushes = new brush_t[nBrushes];
-
-   pBrushes[0].nPolys = nPolys;
-   pBrushes[0].pPolys = new poly_t[nPolys];
 
    printf("\n*****\n");
    printf("%s: nWalls: %d nPolys: %d\n", __FUNCTION__, nWalls, nWalls * 5);
-
-   int wall = 0;
-   C_TexCoord center;
-   C_TexCoord halfDims;
 
    FILE *fp = fopen("mapGeometry.bsp", "w");
    assert(fp);
@@ -792,11 +782,14 @@ saveGeometryToFile(void)
    /// Write number of brushes
    fwrite(&nBrushes, sizeof(int),1, fp);
    /// Write again number of polys
+   /// This is the number of polys in brush and since there is only one brush
+   /// all the polys goes to it
    fwrite(&nPolys, sizeof(int), 1, fp);
 
    /// Generate wall geometry
    for(unsigned int i = 0; i < mergedTiles.size(); i++) {
-      /// For each poly...
+      /// For merged tile there are 5 polys
+      /// 4 walls and 1 roof
 
       /// Calculate vertices
       halfDims.u = mergedTiles[i].width * tileSize / 2.0f;
@@ -826,6 +819,7 @@ saveGeometryToFile(void)
       fwrite(&v0, sizeof(float), 3, fp);
       fwrite(&v1, sizeof(float), 3, fp);
       fwrite(&v2, sizeof(float), 3, fp);
+      fwrite(&v3, sizeof(float), 3, fp);
 
       /// Front wall
       /// Write number of vertices
@@ -849,6 +843,7 @@ saveGeometryToFile(void)
       fwrite(&v0, sizeof(float), 3, fp);
       fwrite(&v1, sizeof(float), 3, fp);
       fwrite(&v2, sizeof(float), 3, fp);
+      fwrite(&v3, sizeof(float), 3, fp);
 
       /// Right wall
       /// Write number of vertices
@@ -872,6 +867,7 @@ saveGeometryToFile(void)
       fwrite(&v0, sizeof(float), 3, fp);
       fwrite(&v1, sizeof(float), 3, fp);
       fwrite(&v2, sizeof(float), 3, fp);
+      fwrite(&v3, sizeof(float), 3, fp);
 
       /// Back wall
       /// Write number of vertices
@@ -895,6 +891,7 @@ saveGeometryToFile(void)
       fwrite(&v0, sizeof(float), 3, fp);
       fwrite(&v1, sizeof(float), 3, fp);
       fwrite(&v2, sizeof(float), 3, fp);
+      fwrite(&v3, sizeof(float), 3, fp);
 
       /// Top/roof wall
       /// Write number of vertices
@@ -918,7 +915,10 @@ saveGeometryToFile(void)
       fwrite(&v0, sizeof(float), 3, fp);
       fwrite(&v1, sizeof(float), 3, fp);
       fwrite(&v2, sizeof(float), 3, fp);
+      fwrite(&v3, sizeof(float), 3, fp);
    }
+
+   fclose(fp);
 }
 
 int
