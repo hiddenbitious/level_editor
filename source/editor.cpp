@@ -56,6 +56,8 @@ typedef struct {
 
 TextureImage textures[2];						/// Storage For 10 Textures
 
+void saveGeometryToFile(void);
+
 bool
 LoadTGA(TextureImage *texture, char *filename)				// Loads A TGA File Into Memory
 {
@@ -270,7 +272,7 @@ update(void)
 
      	/// Ctrl + m
       case 13:
-         mergeTiles();
+         saveGeometryToFile();
          break;
       }
 	}
@@ -701,10 +703,9 @@ firstPass(int x, int y, bool **visitedTiles, vector<mergedTile_t> &mergedTiles)
 }
 
 void
-mergeTiles(/*vector<mergedTile_t> &mergedTiles*/ void)
+mergeTiles(vector<mergedTile_t> &mergedTiles)
 {
-   int x, y, wallTiles = 0, wallTiles2;
-   vector<mergedTile_t> mergedTiles(0);
+   unsigned int x, y, wallTiles = 0, wallTiles2;
 
    /// initialize
    bool **visitedTiles = new bool *[TILES_ON_X];
@@ -750,6 +751,174 @@ mergeTiles(/*vector<mergedTile_t> &mergedTiles*/ void)
    for(x = 0; x < TILES_ON_X; x++)
       delete[] visitedTiles[x];
    delete[] visitedTiles;
+}
+
+void
+saveGeometryToFile(void)
+{
+   const int verticesPerPoly = 4;
+   C_Vertex v1, v2, v3, v0;
+
+   /// Merge tiles
+   vector<mergedTile_t> mergedTiles(0);
+   mergeTiles(mergedTiles);
+
+   /// Count wall tiles in map
+   int nWalls = mergedTiles.size();
+
+   /// Allocate raw polys
+   /// 4 faces for each wall + 1 for top/roof
+   int nPolys = nWalls * 5;
+   poly_t** pRawPolys = new poly_t *[nPolys];
+   /// Use just one brush
+   int nBrushes = 1;
+   brush_t* pBrushes = new brush_t[nBrushes];
+
+   pBrushes[0].nPolys = nPolys;
+   pBrushes[0].pPolys = new poly_t[nPolys];
+
+   printf("\n*****\n");
+   printf("%s: nWalls: %d nPolys: %d\n", __FUNCTION__, nWalls, nWalls * 5);
+
+   int wall = 0;
+   C_TexCoord center;
+   C_TexCoord halfDims;
+
+   FILE *fp = fopen("mapGeometry.bsp", "w");
+   assert(fp);
+
+   /// Write number of polys
+   fwrite(&nPolys, sizeof(int), 1, fp);
+   /// Write number of brushes
+   fwrite(&nBrushes, sizeof(int),1, fp);
+   /// Write again number of polys
+   fwrite(&nPolys, sizeof(int), 1, fp);
+
+   /// Generate wall geometry
+   for(unsigned int i = 0; i < mergedTiles.size(); i++) {
+      /// For each poly...
+
+      /// Calculate vertices
+      halfDims.u = mergedTiles[i].width * tileSize / 2.0f;
+      halfDims.v = mergedTiles[i].height * tileSize / 2.0f;
+      center.u = mergedTiles[i].x * tileSize + halfDims.u;
+      center.v = mergedTiles[i].y * tileSize + halfDims.v;
+
+      /// Left wall
+      /// Write number of vertices
+      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+      v0.x = center.u - halfDims.u;
+      v0.y = -tileSize / 2.0f;
+      v0.z = center.v + halfDims.v;
+
+      v1.x = center.u - halfDims.u;
+      v1.y = tileSize / 2.0f;
+      v1.z = center.v + halfDims.v;
+
+      v2.x = center.u - halfDims.u;
+      v2.y = tileSize / 2.0f;
+      v2.z = center.v - halfDims.v;
+
+      v3.x = center.u - halfDims.u;
+      v3.y = -tileSize / 2.0f;
+      v3.z = center.v - halfDims.v;
+
+      fwrite(&v0, sizeof(float), 3, fp);
+      fwrite(&v1, sizeof(float), 3, fp);
+      fwrite(&v2, sizeof(float), 3, fp);
+
+      /// Front wall
+      /// Write number of vertices
+      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+      v0.x = center.u - halfDims.u;
+      v0.y = -tileSize / 2.0f;
+      v0.z = center.v + halfDims.v;
+
+      v1.x = center.u + halfDims.u;
+      v1.y = -tileSize / 2.0f;
+      v1.z = center.v + halfDims.v;
+
+      v2.x = center.u + halfDims.u;
+      v2.y = tileSize / 2.0f;
+      v2.z = center.v + halfDims.v;
+
+      v3.x = center.u - halfDims.u;
+      v3.y = tileSize / 2.0f;
+      v3.z = center.v + halfDims.v;
+
+      fwrite(&v0, sizeof(float), 3, fp);
+      fwrite(&v1, sizeof(float), 3, fp);
+      fwrite(&v2, sizeof(float), 3, fp);
+
+      /// Right wall
+      /// Write number of vertices
+      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+      v0.x = center.u + halfDims.u;
+      v0.y = -tileSize / 2.0f;
+      v0.z = center.v + halfDims.v;
+
+      v1.x = center.u + halfDims.u;
+      v1.y = -tileSize / 2.0f;
+      v1.z = center.v - halfDims.v;
+
+      v2.x = center.u + halfDims.u;
+      v2.y = tileSize / 2.0f;
+      v2.z = center.v - halfDims.v;
+
+      v3.x = center.u + halfDims.u;
+      v3.y = tileSize / 2.0f;
+      v3.z = center.v + halfDims.v;
+
+      fwrite(&v0, sizeof(float), 3, fp);
+      fwrite(&v1, sizeof(float), 3, fp);
+      fwrite(&v2, sizeof(float), 3, fp);
+
+      /// Back wall
+      /// Write number of vertices
+      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+      v0.x = center.u + halfDims.u;
+      v0.y = -tileSize / 2.0f;
+      v0.z = center.v - halfDims.v;
+
+      v1.x = center.u - halfDims.u;
+      v1.y = -tileSize / 2.0f;
+      v1.z = center.v - halfDims.v;
+
+      v2.x = center.u - halfDims.u;
+      v2.y = tileSize / 2.0f;
+      v2.z = center.v - halfDims.v;
+
+      v3.x = center.u + halfDims.u;
+      v3.y = tileSize / 2.0f;
+      v3.z = center.v - halfDims.v;
+
+      fwrite(&v0, sizeof(float), 3, fp);
+      fwrite(&v1, sizeof(float), 3, fp);
+      fwrite(&v2, sizeof(float), 3, fp);
+
+      /// Top/roof wall
+      /// Write number of vertices
+      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+      v0.x = center.u + halfDims.u;
+      v0.y = tileSize / 2.0f;
+      v0.z = center.v + halfDims.v;
+
+      v1.x = center.u + halfDims.u;
+      v1.y = tileSize / 2.0f;
+      v1.z = center.v - halfDims.v;
+
+      v2.x = center.u - halfDims.u;
+      v2.y = tileSize / 2.0f;
+      v2.z = center.v - halfDims.v;
+
+      v3.x = center.u - halfDims.u;
+      v3.y = tileSize / 2.0f;
+      v3.z = center.v + halfDims.v;
+
+      fwrite(&v0, sizeof(float), 3, fp);
+      fwrite(&v1, sizeof(float), 3, fp);
+      fwrite(&v2, sizeof(float), 3, fp);
+   }
 }
 
 int
