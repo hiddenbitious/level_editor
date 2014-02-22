@@ -1,8 +1,21 @@
 #include <stdio.h>
 #include <vector>
+#include <stack>
 #include <string.h>
 
 #include "map.h"
+
+C_Map::C_Map(void)
+{
+	for(int x = 0; x < TILES_ON_X; x++) {
+		for(int y = 0; y < TILES_ON_Y; y++) {
+		   tiles[x][y].x = x;
+		   tiles[x][y].y = y;
+		   tiles[x][y].area = NAN;
+		   tiles[x][y].hasParameter = false;
+		}
+	}
+}
 
 C_Map::~C_Map(void)
 {
@@ -156,6 +169,7 @@ C_Map::readMap(const char *filename)
 			tiles[_x][_y].setParameter(buf);
 		   /// One loop is lost everytime a parameter is read.
 			--i;
+         --counters[tmp];
 		}
 	}
 
@@ -293,6 +307,124 @@ C_Map::mergeTiles(void)
 }
 
 void
+C_Map::floodFill(tile *startTile, areaTypes_t area)
+{
+   tile *tmpTile;
+   int x, y;
+
+   stack<tile *> tilesToExamine;
+   tilesToExamine.push(startTile);
+   startTile->area = area;
+
+   while(!tilesToExamine.empty()) {
+      tmpTile = tilesToExamine.top();
+      tilesToExamine.pop();
+
+//      tmpTile->area = area;
+      x = tmpTile->x;
+      y = tmpTile->y;
+
+      printf("(%d %d)\n", x, y);
+
+      assert(x >= 0 && x < TILES_ON_X);
+      assert(y >= 0 && y < TILES_ON_Y);
+
+      /// Add more tiles
+      if(x < TILES_ON_X - 1) {
+         if(tiles[x + 1][y].area == NAN &&
+            tiles[x + 1][y].getType() == TILE_0) {
+            tilesToExamine.push(&tiles[x + 1][y]);
+            tiles[x + 1][y].area = area;
+         }
+      }
+
+      if(x > 0) {
+         if(tiles[x - 1][y].area == NAN &&
+            tiles[x - 1][y].getType() == TILE_0) {
+            tilesToExamine.push(&tiles[x - 1][y]);
+            tiles[x - 1][y].area = area;
+         }
+      }
+
+      if(y < TILES_ON_Y - 1) {
+         if(tiles[x][y + 1].area == NAN &&
+            tiles[x][y + 1].getType() == TILE_0) {
+            tilesToExamine.push(&tiles[x][y + 1]);
+            tiles[x][y + 1].area = area;
+         }
+      }
+
+      if(y > 0) {
+         if(tiles[x][y - 1].area == NAN &&
+            tiles[x][y - 1].getType() == TILE_0) {
+            tilesToExamine.push(&tiles[x][y - 1]);
+            tiles[x][y - 1].area = area;
+         }
+      }
+   }
+}
+
+void
+C_Map::divideAreas(void)
+{
+   bool found = false;
+   int x, y;
+
+   /// Detect tiles that are 100% walkable. Hopefully these will be tha map start tiles
+   /// (staircases, doors, or teleporters for remote map areas)
+   for(x = 0; x < TILES_ON_X && !found; ++x) {
+      for(y = 0; y < TILES_ON_Y; ++y) {
+         if(tiles[x][y].getType() == TILE_4) {
+            found = true;
+            --x;
+            break;
+         }
+      }
+   }
+
+   assert(found);
+
+   printf("Start tile found at (%d, %d)\n", x, y);
+   floodFill(&tiles[x][y], WALKABLE);
+
+   printf("\n*****\nWalkable tiles:\n");
+   for(x = 0; x < TILES_ON_X; ++x) {
+      for(y = 0; y < TILES_ON_Y; ++y) {
+         if(tiles[x][y].area == WALKABLE)
+            printf("   (%d, %d)\n", x, y);
+      }
+   }
+   printf("*****");
+
+   /// Find one tile that is 100% a VOID area and flood fill
+   found = false;
+   for(x = 0; x < TILES_ON_X && !found; ++x) {
+      for(y = 0; y < TILES_ON_Y; ++y) {
+         if(tiles[x][y].getType() == TILE_0 && tiles[x][y].area == NAN) {
+            found = true;
+            --x;
+            break;
+         }
+      }
+   }
+
+   assert(found);
+
+   printf("Found one VOID tile at (%d, %d)\n", x, y);
+   floodFill(&tiles[x][y], VOID);
+
+   printf("\n*****\nVoid tiles:\n");
+   for(x = 0; x < TILES_ON_X; ++x) {
+      for(y = 0; y < TILES_ON_Y; ++y) {
+         if(tiles[x][y].area == VOID)
+            printf("   (%d, %d)\n", x, y);
+      }
+   }
+   printf("*****");
+
+}
+
+void
 C_Map::saveGeometryToFile(const char *filename)
 {
    const int verticesPerPoly = 4;
@@ -303,6 +435,8 @@ C_Map::saveGeometryToFile(const char *filename)
    C_Vertex v1, v2, v3, v0;
    C_TexCoord center;
    C_TexCoord halfDims;
+
+   divideAreas();
 
    /// Merge tiles
    mergeTiles();

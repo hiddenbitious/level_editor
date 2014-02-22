@@ -1,5 +1,5 @@
 CC=clang++
-CFLAGS=-c -Wall -O3 -Wno-unused-result -Wno-sign-compare
+CFLAGS=-c -Wall -O0 -g -Wno-unused-result -Wno-sign-compare
 
 LDFLAGS=-lm -lGL -lglut -lGLU
 

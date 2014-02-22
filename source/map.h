@@ -22,7 +22,7 @@ typedef struct {
 
 class C_Map {
 public:
-   C_Map(void) {};
+   C_Map(void);
    ~C_Map(void);
    bool readMap(const char *filename);
    bool saveMap(const char *filename);
@@ -43,5 +43,8 @@ private:
    /// Merging passes
    void firstPass(int x, int y, bool **visitedTiles);
    void secondPass(void);
+
+   void divideAreas(void);
+   void floodFill(tile *startTile, areaTypes_t area);
 };
 #endif

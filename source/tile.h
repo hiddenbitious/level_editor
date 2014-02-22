@@ -3,6 +3,12 @@
 
 #include "globals.h"
 
+typedef enum {NAN,          /// Not categorized yet
+              VOID,
+              WALKABLE,
+
+              N_AREA_TYPES} areaTypes_t;
+
 typedef enum {TILE_0,
               TILE_WALL,
               TILE_2,
@@ -28,17 +34,18 @@ static const float selections[N_TILE_TYPES + 1][3] = { {1.0f,	0.0f,	0.0f},	//Wal
 
 class tile
 {
-public:
-	int x, y;			/// coordinates
-
 private:
 	int type;			/// tile's type
 	string parameter;	/// parameter saved to/read from file
 
 public:
-	bool hasParameter;
+	int x, y;			/// coordinates
 
-	tile(int x = 0, int y = 0);
+	bool hasParameter;
+	areaTypes_t area;
+
+   tile(void);
+	tile(int x, int y);
 	~tile(void);
 
 	void draw(float tileSize);

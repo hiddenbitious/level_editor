@@ -1,8 +1,23 @@
 #include "tile.h"
 
-tile::tile(int _x, int _y) :
-x(_x), y(_y), parameter(""), hasParameter(false)
+tile::tile(void)
 {
+   x = 0;
+   y = 0;
+   parameter = "";
+   hasParameter = false;
+   area = NAN;
+   type = TILE_0;
+}
+
+tile::tile(int _x, int _y)
+{
+   x = _x;
+   y = _y;
+   parameter = "";
+   hasParameter = false;
+   area = NAN;
+   type = TILE_0;
 }
 
 tile::~tile(void)
