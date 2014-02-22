@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <assert.h>
 
 #include "globals.h"
+#include "map.h"
 #include "popUp.h"
 #include "tile.h"
 
@@ -13,11 +13,14 @@
 #define TILES_ON_Y                   50
 
 popUp *popUps = NULL;
-
+C_Map *map = NULL;
 // User Defined Variables
 GLuint		base;									/// Font Display List
 
-float tileSize = 10.0f;						   /// Tile size (rectangle)
+/// Tile size (rectangle)
+/// This is used for drawing the map grid.
+/// It changes when the window is changed size
+float tileSize = 10.0f;
 int mouseTile_x, mouseTile_y;				   /// Which tile is the mouse over.
 tile tiles[TILES_ON_X][TILES_ON_Y];		   /// Holds the tile data
 int tileSelection = TILE_WALL;				/// Default tile type
@@ -41,10 +44,7 @@ int mouseButton = -1;
 int keyModifiers = 0;
 unsigned char keyPressed;
 
-bool readMap(void);
-void saveMap(void);
 void drawGrid(void);
-void mergeTiles(/*vector<mergedTile_t> &mergedTiles*/ void);
 
 typedef struct {
 	GLubyte	*imageData;							/// Image Data (Up To 32 Bits)
@@ -54,9 +54,7 @@ typedef struct {
 	GLuint	texID;								/// Texture ID Used To Select A Texture
 } TextureImage;									/// Structure Name
 
-TextureImage textures[2];						/// Storage For 10 Textures
-
-void saveGeometryToFile(void);
+TextureImage textures[10];						/// Storage For 10 Textures
 
 bool
 LoadTGA(TextureImage *texture, char *filename)				// Loads A TGA File Into Memory
@@ -195,21 +193,21 @@ Initialize (void)
 	}
 
 	BuildFont();
+	map = new C_Map();
 
-	if ( !readMap() ) {
-//		tiles = new tile ( 0 , 0 ) [ TILES_ON_X * TILES_ON_Y ];
-//		ZeroMemory ( tiles , TILES_ON_X * TILES_ON_Y * sizeof ( tile ) );
+	if (!map->readMap("map.txt")) {
+	   assert(0);
 	}
 
 	/// Text for the popUp window
-	options.push_back("Red" );
-	options.push_back("Green" );
-	options.push_back("Blue" );
-	options.push_back("Black" );
-	options.push_back("Magenta" );
-	options.push_back("Yellow" );
-	options.push_back("Cyan" );
-	options.push_back("White" );
+	options.push_back("Red");
+	options.push_back("Green");
+	options.push_back("Blue");
+	options.push_back("Black");
+	options.push_back("Magenta");
+	options.push_back("Yellow");
+	options.push_back("Cyan");
+	options.push_back("White");
 
    /// OGL stuff
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
@@ -218,8 +216,6 @@ Initialize (void)
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
-//	glAlphaFunc(GL_GREATER,0.1f);
-//	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
 
@@ -233,6 +229,9 @@ Deinitialize (void)
 
 	if(popUps)
 		delete popUps;
+
+   if(map)
+      delete map;
 }
 
 void
@@ -255,10 +254,9 @@ update(void)
       old_mouse_x = mouseTile_x;
 		old_mouse_y = mouseTile_y;
 
-		tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
-		tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
-		command = tiles[mouseTile_x][mouseTile_y].getParameter();
-//		tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
+		map->tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
+		map->tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
+		command = map->tiles[mouseTile_x][mouseTile_y].getParameter();
 		enterCommand = true;
 	}
 
@@ -267,12 +265,12 @@ update(void)
 	   switch(keyPressed) {
    	/// Ctrl + s
 	   case 19:
-         saveMap();
+         map->saveMap("map.txt");
          break;
 
      	/// Ctrl + m
       case 13:
-         saveGeometryToFile();
+         map->saveGeometryToFile("mapGeometry.bsp");
          break;
       }
 	}
@@ -289,7 +287,7 @@ update(void)
 		}
 	   /// Enter
 		else if(keyPressed == 13) {
-			tiles[old_mouse_x][old_mouse_y].setParameter(command);
+			map->tiles[old_mouse_x][old_mouse_y].setParameter(command);
 			command.erase();
 			enterCommand = false;
 		}
@@ -305,15 +303,15 @@ update(void)
 			delete popUps;
 			popUps = NULL;
 		} else {
-			tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
-			tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
-			tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
+			map->tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
+			map->tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
+			map->tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
 		}
 		break;
 
 	case GLUT_RIGHT_BUTTON:
-			tiles[mouseTile_x][mouseTile_y].setType(0);
-			tiles[mouseTile_x][mouseTile_y].setParameter("");
+			map->tiles[mouseTile_x][mouseTile_y].setType(0);
+			map->tiles[mouseTile_x][mouseTile_y].setParameter("");
 			break;
 
 	case GLUT_MIDDLE_BUTTON:
@@ -416,10 +414,10 @@ Draw(void)
 	glLoadIdentity();
 
    /// Automatically print parameters under mouse
-	if(tiles[mouseTile_x][mouseTile_y].hasParameter == true && !showCommand) {
+	if(map->tiles[mouseTile_x][mouseTile_y].hasParameter == true && !showCommand) {
 		showCommand = true;
-		command = tiles[mouseTile_x][mouseTile_y].getParameter ();
-	} else if(tiles[mouseTile_x][mouseTile_y].hasParameter == false && showCommand) {
+		command = map->tiles[mouseTile_x][mouseTile_y].getParameter ();
+	} else if(map->tiles[mouseTile_x][mouseTile_y].hasParameter == false && showCommand) {
 		showCommand = false;
 		if(popUps != NULL) {
 			delete popUps;
@@ -427,12 +425,12 @@ Draw(void)
 		}
 	}
 
-	drawGrid();
+	map->drawGrid(tileSize);
 
 	glEnable(GL_ALPHA);
 
 	glColor3f(0.0f, 0.0f, 0.0f);
-	glPrint(0, windowSize_y - 20, "Tile x: %i Tile y: %i Type: %i", mouseTile_x, mouseTile_y, tiles[mouseTile_x][mouseTile_y].getType());
+	glPrint(0, windowSize_y - 20, "Tile x: %i Tile y: %i Type: %i", mouseTile_x, mouseTile_y, map->tiles[mouseTile_x][mouseTile_y].getType());
 	if(tileSelection > 0) {
 		glColor3fv(selections[tileSelection-1]);
 		glPrint(0, windowSize_y - 40, "Current tile type: %s", options[tileSelection - 1].c_str());
@@ -461,157 +459,12 @@ Draw(void)
 
    /// Prints a pop up under mouse with parameter for a tile
 	if(showCommand && popUps == NULL)
-		popUps = new popUp(tiles[mouseTile_x][mouseTile_y].getParameter(), false, mouse_x, mouse_y, windowSize_x, windowSize_y);
+		popUps = new popUp(map->tiles[mouseTile_x][mouseTile_y].getParameter(), false, mouse_x, mouse_y, windowSize_x, windowSize_y);
 
 	drawPopUps();
 
 	glFlush();
 	glutSwapBuffers();
-}
-
-void
-drawGrid(void)
-{
-   /// Number of thin lines per tile (only 2 is accurate enough).
-   static const int linesPerTile = 3;
-   float x, y;
-	float w = TILES_ON_X * tileSize;
-	float h = TILES_ON_Y * tileSize;
-	float step = tileSize / linesPerTile;
-
-	glBegin(GL_LINES);
-	glColor3f(0.9f, 0.9f, 0.9f);
-
-   /// Draw thin lines
-   /// These are bound to loose precision
-	for(y = 0; y < h; y += step )  {
-		glVertex3f(0, y, 0);
-		glVertex3f(w, y, 0);
-	}
-
-	for(x = 0; x < w; x += step ) {
-		glVertex3f(x, 0, 0);
-		glVertex3f(x, h, 0);
-	}
-
-   /// Draw bold lines
-	glColor3f(0.7f, 0.7f, 0.7f);
-	for(x = 0; x < TILES_ON_X; x++) {
-		for(y = 0; y < TILES_ON_Y; y++) {
-			glVertex2f(x * tileSize, y * tileSize);
-			glVertex2f((x+1) * tileSize, y * tileSize);
-
-			glVertex2f((x+1) * tileSize, y * tileSize);
-			glVertex2f((x+1) * tileSize, (y+1) * tileSize);
-
-			glVertex2f((x+1) * tileSize, (y+1) * tileSize);
-			glVertex2f(x * tileSize, (y+1) * tileSize);
-
-			glVertex2f(x * tileSize, (y+1) * tileSize);
-			glVertex2f(x * tileSize, y * tileSize);
-		}
-	}
-	glEnd();
-
-   /// Draw marked tiles
-	for(int tile_x = 0; tile_x < TILES_ON_X; tile_x++) {
-		for(int tile_y = 0; tile_y < TILES_ON_Y; tile_y++) {
-			tiles[tile_x][tile_y].draw(tileSize);
-		}
-	}
-}
-
-void
-saveMap(void)
-{
-	int nTiles = 0, x, y;
-
-	FILE *fd = fopen("map.txt", "w");
-
-	if(!fd)
-		return;
-
-   /// Count tiles that either has a parameter or is not the default type
-	for(x = 0; x < TILES_ON_X; x++) {
-		for(y = 0; y < TILES_ON_Y; y++) {
-			if(tiles[x][y].getType() || tiles[x][y].hasParameter)
-				++nTiles;
-		}
-	}
-
-	fprintf(fd, "%d\n", TILES_ON_X);			/// Save x dimension
-	fprintf(fd, "%d\n", TILES_ON_Y);			/// Save y dimension
-	fprintf(fd, "%d\n", nTiles);			/// Save how many tiles will be saved
-	fprintf(fd, "%f\n", tileSize);		/// Save tile's dimensions
-
-	for(x = 0; x < TILES_ON_X; x++) {
-		for(y = 0; y < TILES_ON_Y; y++) {
-		   /// Write only non zero tiles.
-			if(tiles[x][y].getType()) {
-				fprintf(fd, "%d %d %d", x, y, tiles[x][y].getType());
-
-				if ( tiles[x][y].hasParameter )
-					fprintf(fd, " %s\n", tiles[x][y].getParameter().c_str());
-				else
-					fprintf(fd, "\n");
-			} else if(tiles[x][y].hasParameter) {
-      		/// And the empty tiles with a parameter
-				fprintf(fd, "%d %d %d", x, y, 0);
-				fprintf(fd, " %s\n", tiles[x][y].getParameter().c_str());
-			}
-		}
-	}
-
-	fclose(fd);
-
-	printf("map saved.\n");
-}
-
-bool
-readMap(void)
-{
-	int _xTiles, _yTiles, _tileSize, tmp, nTiles, _x, _y;
-	int i, c;
-	char buf[MAX_PARAMETER_LENGTH];
-
-	FILE *fd;
-
-	if((fd = fopen( "map.txt" , "r")) == NULL)
-		return false;
-
-	fscanf(fd, "%d", &_xTiles);		/// Read size on x.
-	fscanf(fd, "%d", &_yTiles);		/// Read size on y.
-	fscanf(fd, "%d", &nTiles);		   /// Read number of tiles stored in file.
-	fscanf(fd, "%f", &_tileSize);	   /// Read tile size (not used).
-
-   assert(_xTiles == TILES_ON_X);
-   assert(_yTiles == TILES_ON_Y);
-   assert(nTiles <= TILES_ON_X * TILES_ON_Y);
-
-	for(i = 0; i < nTiles; i++) {
-		fscanf(fd, "%d", &_x);			/// Read x coords
-		fscanf(fd, "%d", &_y);			/// Read y coords
-		c = fscanf(fd, "%d", &tmp);	/// Read tile type
-		assert(_x < TILES_ON_X);
-		assert(_y < TILES_ON_Y);
-		assert(tmp <= MAX_TILE_TYPES);
-
-		tiles[_x][_y].setType(tmp);
-		tiles[_x][_y].setCoordX(_x);
-		tiles[_x][_y].setCoordY(_y);
-
-   	/// There's a parameter. Read it.
-		if(!c) {
-		   /// fgets doesn't stop at white spaces but it stops at '\n'
-			fgets(buf, MAX_PARAMETER_LENGTH, fd);
-			tiles[_x][_y].setParameter(buf);
-		   /// One loop is lost everytime a parameter is read.
-			--i;
-		}
-	}
-
-	fclose(fd);
-	return true;
 }
 
 void
@@ -633,292 +486,6 @@ reshape(int width, int height)
 	/// Update any active pop up
 	if(popUps)
 	   popUps->setWindowDimensions(width, height);
-}
-
-typedef struct {
-   /// Tile center
-   int x, y;
-   /// Tile size
-   int width, height;
-} mergedTile_t;
-
-void
-secondPass(vector<mergedTile_t> &mergedTiles)
-{
-   vector<mergedTile_t>::iterator itx;
-   vector<mergedTile_t>::iterator ity;
-
-   for(itx = mergedTiles.begin(); itx < mergedTiles.end(); itx++) {
-      for(ity = mergedTiles.begin(); ity < mergedTiles.end(); ity++) {
-         /// Merge rows
-         if((*itx).y + (*itx).height == (*ity).y &&
-            (*itx).x == (*ity).x &&
-            (*itx).width == (*ity).width) {
-            (*itx).height += (*ity).height;
-            mergedTiles.erase(ity);
-            --itx;
-         } /// Merge collums
-         else if((*itx).x + (*itx).width == (*ity).x &&
-            (*itx).y == (*ity).y &&
-            (*itx).height == (*ity).height) {
-            (*itx).width += (*ity).width;
-            mergedTiles.erase(ity);
-            --itx;
-         }
-      }
-   }
-}
-
-void
-firstPass(int x, int y, bool **visitedTiles, vector<mergedTile_t> &mergedTiles)
-{
-   int xx = x, yy = y;
-   int width = 1, height = 1;
-   mergedTile_t merged = {x, y, width, height};
-
-   /// Mark start tile as visited
-   visitedTiles[xx][yy] = true;
-
-   /// Scan row
-   if(yy == TILES_ON_Y - 1 || tiles[xx + 1][yy].getType() == TILE_WALL) {
-      while(tiles[xx + 1][yy].getType() == TILE_WALL && xx <= TILES_ON_X - 2) {
-         xx++;
-         width++;
-         visitedTiles[xx][yy] = true;
-      }
-
-      merged.width = width;
-   } else if(xx == TILES_ON_X - 1 || tiles[xx][yy + 1].getType() == TILE_WALL) {
-      /// ... else scan the column
-      while(tiles[xx][yy + 1].getType() == TILE_WALL && yy <= TILES_ON_Y - 2) {
-         yy++;
-         height++;
-         visitedTiles[xx][yy] = true;
-      }
-
-      merged.height = height;
-   }
-
-   mergedTiles.push_back(merged);
-}
-
-void
-mergeTiles(vector<mergedTile_t> &mergedTiles)
-{
-   unsigned int x, y, wallTiles = 0, wallTiles2;
-
-   /// initialize
-   bool **visitedTiles = new bool *[TILES_ON_X];
-   for(x = 0; x < TILES_ON_X; x++) {
-      visitedTiles[x] = new bool[TILES_ON_Y];
-      memset((void *)visitedTiles[x], false, sizeof(bool) * TILES_ON_Y);
-   }
-
-   /// Count wall tiles
-   for(x = 0; x < TILES_ON_X; x++) {
-      for(y = 0; y < TILES_ON_Y; y++) {
-         if(tiles[x][y].getType() == TILE_WALL) wallTiles++;
-      }
-   }
-
-   /// Scan all tiles
-   for(x = 0; x < TILES_ON_X; x++) {
-      for(y = 0; y < TILES_ON_Y; y++) {
-         if(tiles[x][y].getType() == TILE_WALL && visitedTiles[x][y] == false)
-            firstPass(x, y, visitedTiles, mergedTiles);
-      }
-   }
-
-   wallTiles2 = mergedTiles.size();
-
-   /// Print merged tiles after 1st pass
-   for(x = 0; x < mergedTiles.size(); ++x)
-      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
-
-   /// Try to merge more
-   secondPass(mergedTiles);
-
-   /// Print merged tiles after 2nd pass
-   printf("\n\n");
-   for(x = 0; x < mergedTiles.size(); ++x)
-      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
-
-   printf("Map merged:\n");
-   printf("\tInitial wall tiles: %d\n", wallTiles);
-   printf("\tWall tiles after 1st pass: %d\n", wallTiles2);
-   printf("\tWall tiles after 2nd pass: %d\n", mergedTiles.size());
-
-   for(x = 0; x < TILES_ON_X; x++)
-      delete[] visitedTiles[x];
-   delete[] visitedTiles;
-}
-
-void
-saveGeometryToFile(void)
-{
-   const int verticesPerPoly = 4;
-   const int nBrushes = 1;
-
-   C_Vertex v1, v2, v3, v0;
-   C_TexCoord center;
-   C_TexCoord halfDims;
-
-   /// Merge tiles
-   vector<mergedTile_t> mergedTiles(0);
-   mergeTiles(mergedTiles);
-
-   /// Count wall tiles in map
-   int nWalls = mergedTiles.size();
-   int nPolys = nWalls * 5;
-
-   printf("\n*****\n");
-   printf("%s: nWalls: %d nPolys: %d\n", __FUNCTION__, nWalls, nWalls * 5);
-
-   FILE *fp = fopen("mapGeometry.bsp", "w");
-   assert(fp);
-
-   /// Write number of polys
-   fwrite(&nPolys, sizeof(int), 1, fp);
-   /// Write number of brushes
-   fwrite(&nBrushes, sizeof(int),1, fp);
-   /// Write again number of polys
-   /// This is the number of polys in brush and since there is only one brush
-   /// all the polys goes to it
-   fwrite(&nPolys, sizeof(int), 1, fp);
-
-   /// Generate wall geometry
-   for(unsigned int i = 0; i < mergedTiles.size(); i++) {
-      /// For merged tile there are 5 polys
-      /// 4 walls and 1 roof
-
-      /// Calculate vertices
-      halfDims.u = mergedTiles[i].width * tileSize / 2.0f;
-      halfDims.v = mergedTiles[i].height * tileSize / 2.0f;
-      center.u = mergedTiles[i].x * tileSize + halfDims.u;
-      center.v = mergedTiles[i].y * tileSize + halfDims.v;
-
-      /// Left wall
-      /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u - halfDims.u;
-      v0.y = -tileSize / 2.0f;
-      v0.z = center.v + halfDims.v;
-
-      v1.x = center.u - halfDims.u;
-      v1.y = tileSize / 2.0f;
-      v1.z = center.v + halfDims.v;
-
-      v2.x = center.u - halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.z = center.v - halfDims.v;
-
-      v3.x = center.u - halfDims.u;
-      v3.y = -tileSize / 2.0f;
-      v3.z = center.v - halfDims.v;
-
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
-
-      /// Front wall
-      /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u - halfDims.u;
-      v0.y = -tileSize / 2.0f;
-      v0.z = center.v + halfDims.v;
-
-      v1.x = center.u + halfDims.u;
-      v1.y = -tileSize / 2.0f;
-      v1.z = center.v + halfDims.v;
-
-      v2.x = center.u + halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.z = center.v + halfDims.v;
-
-      v3.x = center.u - halfDims.u;
-      v3.y = tileSize / 2.0f;
-      v3.z = center.v + halfDims.v;
-
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
-
-      /// Right wall
-      /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u + halfDims.u;
-      v0.y = -tileSize / 2.0f;
-      v0.z = center.v + halfDims.v;
-
-      v1.x = center.u + halfDims.u;
-      v1.y = -tileSize / 2.0f;
-      v1.z = center.v - halfDims.v;
-
-      v2.x = center.u + halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.z = center.v - halfDims.v;
-
-      v3.x = center.u + halfDims.u;
-      v3.y = tileSize / 2.0f;
-      v3.z = center.v + halfDims.v;
-
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
-
-      /// Back wall
-      /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u + halfDims.u;
-      v0.y = -tileSize / 2.0f;
-      v0.z = center.v - halfDims.v;
-
-      v1.x = center.u - halfDims.u;
-      v1.y = -tileSize / 2.0f;
-      v1.z = center.v - halfDims.v;
-
-      v2.x = center.u - halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.z = center.v - halfDims.v;
-
-      v3.x = center.u + halfDims.u;
-      v3.y = tileSize / 2.0f;
-      v3.z = center.v - halfDims.v;
-
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
-
-      /// Top/roof wall
-      /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u + halfDims.u;
-      v0.y = tileSize / 2.0f;
-      v0.z = center.v + halfDims.v;
-
-      v1.x = center.u + halfDims.u;
-      v1.y = tileSize / 2.0f;
-      v1.z = center.v - halfDims.v;
-
-      v2.x = center.u - halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.z = center.v - halfDims.v;
-
-      v3.x = center.u - halfDims.u;
-      v3.y = tileSize / 2.0f;
-      v3.z = center.v + halfDims.v;
-
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
-   }
-
-   fclose(fp);
 }
 
 int

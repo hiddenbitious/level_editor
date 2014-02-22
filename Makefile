@@ -1,9 +1,9 @@
-CC=g++
-CFLAGS=-c -Wall -O0 -g
+CC=clang++
+CFLAGS=-c -Wall -O3 -Wno-unused-result -Wno-sign-compare
 
 LDFLAGS=-lm -lGL -lglut -lGLU
 
-SOURCES=source/editor.cpp source/tile.cpp source/popUp.cpp
+SOURCES=source/editor.cpp source/tile.cpp source/popUp.cpp source/map.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=editor
 

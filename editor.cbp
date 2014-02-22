@@ -35,6 +35,8 @@
 		<Unit filename="Makefile" />
 		<Unit filename="source/editor.cpp" />
 		<Unit filename="source/globals.h" />
+		<Unit filename="source/map.cpp" />
+		<Unit filename="source/map.h" />
 		<Unit filename="source/popUp.cpp" />
 		<Unit filename="source/popUp.h" />
 		<Unit filename="source/tile.cpp" />

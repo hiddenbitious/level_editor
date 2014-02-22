@@ -3,11 +3,10 @@
 
 #include <vector>
 #include <string>
+#include <assert.h>
 #include <GL/glut.h>
 
 using namespace std;
-
-#define MAX_PARAMETER_LENGTH			256   /// Maximum length of a parameter.
 
 #define MIN(a,b)                    (( a < b ) ? a : b)
 #define MAX(a,b)                    (( a > b ) ? a : b)

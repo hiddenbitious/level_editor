@@ -23,7 +23,7 @@ void tile::setParameter(string param)
 		this->parameter = param;
 
       /// Remove new line characters
-		for(int i = 0; i < parameter.size(); i++) {
+		for(unsigned int i = 0; i < parameter.size(); i++) {
 			if(parameter[i] == '\n')
 				parameter.erase ( i , 1 );
 		}

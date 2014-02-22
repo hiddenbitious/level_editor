@@ -3,12 +3,19 @@
 
 #include "globals.h"
 
-#define MAX_TILE_TYPES                8   /// Number of different tile types
-#define TILES_ON_X                   80
-#define TILES_ON_Y                   50
+typedef enum {TILE_0,
+              TILE_WALL,
+              TILE_2,
+              TILE_3,
+              TILE_4,
+              TILE_5,
+              TILE_6,
+              TILE_7,
+
+              N_TILE_TYPES} tileTypes_t;
 
 /// RGB colors of the available tile types
-static const float selections[MAX_TILE_TYPES+1][3] = { {1.0f,	0.0f,	0.0f},	//Wall
+static const float selections[N_TILE_TYPES + 1][3] = { {1.0f,	0.0f,	0.0f},	//Wall
                                                        {0.0f,	1.0f,	0.0f},	//Staircase
                                                        {0.0f,	0.0f,	1.0f},	//Door
                                                        {0.0f,	0.0f,	0.0f},	//Monster (type can be a parameter)
@@ -19,14 +26,6 @@ static const float selections[MAX_TILE_TYPES+1][3] = { {1.0f,	0.0f,	0.0f},	//Wal
                                                        /// Tile type 0 with parameter.
                                                        {0.8f, 0.8f, 0.8f}};
 
-typedef enum {TILE_0,
-              TILE_WALL,
-              TILE_2,
-              TILE_3,
-              TILE_4,
-              TILE_5,
-              TILE_6,
-              TILE_7} tileTypes_t;
 class tile
 {
 public:
