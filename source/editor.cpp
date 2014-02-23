@@ -305,12 +305,12 @@ update(void)
 		} else {
 			map->tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
 			map->tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
-			map->tiles[mouseTile_x][mouseTile_y].setType(tileSelection);
+			map->tiles[mouseTile_x][mouseTile_y].setType((tileTypes_t)tileSelection);
 		}
 		break;
 
 	case GLUT_RIGHT_BUTTON:
-			map->tiles[mouseTile_x][mouseTile_y].setType(0);
+			map->tiles[mouseTile_x][mouseTile_y].setType(TILE_0);
 			map->tiles[mouseTile_x][mouseTile_y].setParameter("");
 			break;
 

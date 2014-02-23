@@ -13,11 +13,17 @@
 #define TILES_ON_X                   80
 #define TILES_ON_Y                   50
 
+#define NEIGHBOUR_LEFT                0
+#define NEIGHBOUR_RIGHT               1
+#define NEIGHBOUR_BELOW               2
+#define NEIGHBOUR_ABOVE               3
+
 typedef struct {
-   /// Tile center
+   /// Tile's start coordinates
    int x, y;
    /// Tile size
    int width, height;
+   areaTypes_t neighbourAreas[4];
 } mergedTile_t;
 
 class C_Map {
@@ -27,24 +33,47 @@ public:
    bool readMap(const char *filename);
    bool saveMap(const char *filename);
    void saveGeometryToFile(const char *filename);
-   void mergeTiles(void);
-
    void drawGrid(float tileSize);
 
    /// All map tiles
-   tile tiles[80][50];
+   tile tiles[TILES_ON_X][TILES_ON_Y];
+
+   /**
+    * Starting point of the merging algorithm.
+    * The purpose is to detect wall tiles that form
+    * rows, columns or even blocks and merge them into one block
+    */
+   void mergeTiles(void);
 
 private:
-//   float tileSize;
    /// Holds merged tiles after 1st and 2nd pass.
    /// Used only to generate geometry
    vector<mergedTile_t> mergedTiles;
 
-   /// Merging passes
+   /**
+    * Detects rows or columns of consecutive tiles and merges them into 1 block.
+    * The merged tiles are stored in the mergedTiles vector
+    */
    void firstPass(int x, int y, bool **visitedTiles);
+
+   /**
+    * Runs a second pass on the merged tiles vector generated from the first pass.
+    * The purpose is to further merge tile rows with same width, or columns with same height
+    * into rectangles.
+    */
    void secondPass(void);
 
+   /**
+    * Divide map into areas:
+    * Walkable (aka inside the map) and VOID
+    */
    void divideAreas(void);
+
+   /**
+    * Performs the flood fill algorithm in the map.
+    * The flood begins from startTile
+    */
    void floodFill(tile *startTile, areaTypes_t area);
+   int setNeighboutAreas(void);
 };
 #endif

@@ -35,27 +35,28 @@ static const float selections[N_TILE_TYPES + 1][3] = { {1.0f,	0.0f,	0.0f},	//Wal
 class tile
 {
 private:
-	int type;			/// tile's type
+	tileTypes_t type;	/// tile's type
 	string parameter;	/// parameter saved to/read from file
-
-public:
-	int x, y;			/// coordinates
-
-	bool hasParameter;
 	areaTypes_t area;
 
+public:
    tile(void);
 	tile(int x, int y);
 	~tile(void);
 
-	void draw(float tileSize);
+	int x, y;			/// coordinates
 
+	bool hasParameter;
 	void setParameter(string param);
+
+	void draw(float tileSize);
 
    inline void setCoordX(int x) { this->x = x; }
    inline void setCoordY(int y) { this->y = y; }
-   inline void setType(int type){ this->type = type; }
-   inline int getType(void) { return this->type; }
+   inline void setType(tileTypes_t type){ this->type = type; }
+   inline tileTypes_t getType(void) { return this->type; }
+   inline void setArea(areaTypes_t area){ this->area = area; }
+   inline areaTypes_t getArea(void) { return this->area; }
    inline string getParameter(void) { return this->parameter; }
 };
 

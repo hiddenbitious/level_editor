@@ -9,9 +9,9 @@ C_Map::C_Map(void)
 {
 	for(int x = 0; x < TILES_ON_X; x++) {
 		for(int y = 0; y < TILES_ON_Y; y++) {
-		   tiles[x][y].x = x;
-		   tiles[x][y].y = y;
-		   tiles[x][y].area = NAN;
+		   tiles[x][y].setCoordX(x);
+		   tiles[x][y].setCoordY(y);
+		   tiles[x][y].setArea(NAN);
 		   tiles[x][y].hasParameter = false;
 		}
 	}
@@ -154,7 +154,7 @@ C_Map::readMap(const char *filename)
 		assert(_y < TILES_ON_Y);
 		assert(tmp <= MAX_TILE_TYPES);
 
-		tiles[_x][_y].setType(tmp);
+		tiles[_x][_y].setType((tileTypes_t)tmp);
 		tiles[_x][_y].setCoordX(_x);
 		tiles[_x][_y].setCoordY(_y);
 
@@ -183,8 +183,6 @@ C_Map::readMap(const char *filename)
 	}
 	printf("\tTotal %d tiles\n", sum);
    printf("*****\n");
-
-//   mergeTiles();
 
 	return true;
 }
@@ -246,6 +244,10 @@ C_Map::firstPass(int x, int y, bool **visitedTiles)
       merged.height = height;
    }
 
+   merged.neighbourAreas[0] = NAN;
+   merged.neighbourAreas[1] = NAN;
+   merged.neighbourAreas[2] = NAN;
+   merged.neighbourAreas[3] = NAN;
    mergedTiles.push_back(merged);
 }
 
@@ -289,10 +291,13 @@ C_Map::mergeTiles(void)
    /// Try to merge more
    secondPass();
 
-   /// Print merged tiles after 2nd pass
+//   /// Print merged tiles after 2nd pass
 //   printf("\n\n");
 //   for(x = 0; x < mergedTiles.size(); ++x)
 //      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
+
+
+   /// Find merged tiles' neighbours
 
    printf("\n*****\n");
    printf("Map merged:\n");
@@ -314,51 +319,50 @@ C_Map::floodFill(tile *startTile, areaTypes_t area)
 
    stack<tile *> tilesToExamine;
    tilesToExamine.push(startTile);
-   startTile->area = area;
+   startTile->setArea(area);
 
    while(!tilesToExamine.empty()) {
       tmpTile = tilesToExamine.top();
       tilesToExamine.pop();
 
-//      tmpTile->area = area;
       x = tmpTile->x;
       y = tmpTile->y;
 
-      printf("(%d %d)\n", x, y);
+//      printf("(%d %d)\n", x, y);
 
       assert(x >= 0 && x < TILES_ON_X);
       assert(y >= 0 && y < TILES_ON_Y);
 
       /// Add more tiles
       if(x < TILES_ON_X - 1) {
-         if(tiles[x + 1][y].area == NAN &&
+         if(tiles[x + 1][y].getArea() == NAN &&
             tiles[x + 1][y].getType() == TILE_0) {
             tilesToExamine.push(&tiles[x + 1][y]);
-            tiles[x + 1][y].area = area;
+            tiles[x + 1][y].setArea(area);
          }
       }
 
       if(x > 0) {
-         if(tiles[x - 1][y].area == NAN &&
+         if(tiles[x - 1][y].getArea() == NAN &&
             tiles[x - 1][y].getType() == TILE_0) {
             tilesToExamine.push(&tiles[x - 1][y]);
-            tiles[x - 1][y].area = area;
+            tiles[x - 1][y].setArea(area);
          }
       }
 
       if(y < TILES_ON_Y - 1) {
-         if(tiles[x][y + 1].area == NAN &&
+         if(tiles[x][y + 1].getArea() == NAN &&
             tiles[x][y + 1].getType() == TILE_0) {
             tilesToExamine.push(&tiles[x][y + 1]);
-            tiles[x][y + 1].area = area;
+            tiles[x][y + 1].setArea(area);
          }
       }
 
       if(y > 0) {
-         if(tiles[x][y - 1].area == NAN &&
+         if(tiles[x][y - 1].getArea() == NAN &&
             tiles[x][y - 1].getType() == TILE_0) {
             tilesToExamine.push(&tiles[x][y - 1]);
-            tiles[x][y - 1].area = area;
+            tiles[x][y - 1].setArea(area);
          }
       }
    }
@@ -387,20 +391,20 @@ C_Map::divideAreas(void)
    printf("Start tile found at (%d, %d)\n", x, y);
    floodFill(&tiles[x][y], WALKABLE);
 
-   printf("\n*****\nWalkable tiles:\n");
-   for(x = 0; x < TILES_ON_X; ++x) {
-      for(y = 0; y < TILES_ON_Y; ++y) {
-         if(tiles[x][y].area == WALKABLE)
-            printf("   (%d, %d)\n", x, y);
-      }
-   }
-   printf("*****");
+//   printf("\n*****\nWalkable tiles:\n");
+//   for(x = 0; x < TILES_ON_X; ++x) {
+//      for(y = 0; y < TILES_ON_Y; ++y) {
+//         if(tiles[x][y].getArea() == WALKABLE)
+//            printf("   (%d, %d)\n", x, y);
+//      }
+//   }
+//   printf("*****");
 
    /// Find one tile that is 100% a VOID area and flood fill
    found = false;
    for(x = 0; x < TILES_ON_X && !found; ++x) {
       for(y = 0; y < TILES_ON_Y; ++y) {
-         if(tiles[x][y].getType() == TILE_0 && tiles[x][y].area == NAN) {
+         if(tiles[x][y].getType() == TILE_0 && tiles[x][y].getArea() == NAN) {
             found = true;
             --x;
             break;
@@ -413,15 +417,85 @@ C_Map::divideAreas(void)
    printf("Found one VOID tile at (%d, %d)\n", x, y);
    floodFill(&tiles[x][y], VOID);
 
-   printf("\n*****\nVoid tiles:\n");
-   for(x = 0; x < TILES_ON_X; ++x) {
-      for(y = 0; y < TILES_ON_Y; ++y) {
-         if(tiles[x][y].area == VOID)
-            printf("   (%d, %d)\n", x, y);
-      }
-   }
-   printf("*****");
+//   printf("\n*****\nVoid tiles:\n");
+//   for(x = 0; x < TILES_ON_X; ++x) {
+//      for(y = 0; y < TILES_ON_Y; ++y) {
+//         if(tiles[x][y].getArea() == VOID)
+//            printf("   (%d, %d)\n", x, y);
+//      }
+//   }
+//   printf("*****");
 
+}
+
+/**
+ * For each merged tile, detects it's neighbour areas.
+ * According to the areas found it also counts the number of polygons
+ */
+int
+C_Map::setNeighboutAreas(void)
+{
+   int nPolys = mergedTiles.size() * 5;
+   int x, y;
+   areaTypes_t area;
+//   tileTypes_t type;
+
+   assert(nPolys);
+
+   /// Loop through merged tiles and set their neighbour areas
+   for(unsigned int i = 0; i < mergedTiles.size(); i++) {
+      x = mergedTiles[i].x;
+      y = mergedTiles[i].y;
+
+      /// Check left neigbhour
+      if(x > 0) {
+         area = tiles[x - 1][y].getArea();
+//         type = tiles[x - 1][y].getType();
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = area == NAN ? WALKABLE : area;
+      } else {
+         area = VOID;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = VOID;
+      }
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == VOID) --nPolys;
+
+      /// Check right neigbhour
+      if(x + mergedTiles[i].width < TILES_ON_X - 1) {
+         area = tiles[x + mergedTiles[i].width][y].getArea();
+//         type = tiles[x + mergedTiles[i].width][y].getType();
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = area == NAN ? WALKABLE : area;
+         if(area == VOID) --nPolys;
+      } else {
+         area = VOID;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = VOID;
+      }
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == VOID) --nPolys;
+
+      /// Check neigbhour below
+      if(y > 0) {
+         area = tiles[x][y - 1].getArea();
+//         type = tiles[x][y - 1].getType();
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = area == NAN ? WALKABLE : area;
+         if(area == VOID) --nPolys;
+      } else {
+         area = VOID;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = VOID;
+      }
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == VOID) --nPolys;
+
+      /// Check neigbhour above
+      if(y + mergedTiles[i].height < TILES_ON_Y - 1) {
+         area = tiles[x][y + mergedTiles[i].height].getArea();
+//         type = tiles[x][y + mergedTiles[i].height].getType();
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = area == NAN ? WALKABLE : area;
+         if(area == VOID) --nPolys;
+      } else {
+         area = VOID;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = VOID;
+      }
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == VOID) --nPolys;
+   }
+
+   return nPolys;
 }
 
 void
@@ -431,23 +505,32 @@ C_Map::saveGeometryToFile(const char *filename)
    const int nBrushes = 1;
    /// Shadow global variable.
    const float tileSize = 20.0f;
+   int nPolys, polysWriten = 0;
 
    C_Vertex v1, v2, v3, v0;
    C_TexCoord center;
    C_TexCoord halfDims;
 
+   /// Divide map into areas
    divideAreas();
 
    /// Merge tiles
    mergeTiles();
 
-   /// Count wall tiles in map
-   int nWalls = mergedTiles.size();
-   int nPolys = nWalls * 5;
+   nPolys = setNeighboutAreas();
+//   nPolys = mergedTiles.size() * 5;
+
+   /// Print final merged tiles
+   printf("\n\n");
+   for(int x = 0; x < mergedTiles.size(); ++x) {
+      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
+      printf("   %d %d %d %d\n", mergedTiles[x].neighbourAreas[NEIGHBOUR_LEFT], mergedTiles[x].neighbourAreas[NEIGHBOUR_ABOVE],
+                                 mergedTiles[x].neighbourAreas[NEIGHBOUR_RIGHT], mergedTiles[x].neighbourAreas[NEIGHBOUR_BELOW]);
+   }
 
    printf("\n*****\n");
    printf("Writing \"%s\"...\n", filename);
-   printf("   nWalls: %d nPolys: %d\n", nWalls, nWalls * 5);
+   printf("   wall tiles: %lu total polygons: %d\n", mergedTiles.size(), nPolys);
 
    FILE *fp = fopen(filename, "w");
    assert(fp);
@@ -473,100 +556,112 @@ C_Map::saveGeometryToFile(const char *filename)
       center.v = mergedTiles[i].y * tileSize + halfDims.v;
 
       /// Left wall
-      /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u - halfDims.u;
-      v0.y = -tileSize / 2.0f;
-      v0.z = center.v + halfDims.v;
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == WALKABLE) {
+         /// Write number of vertices
+         fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+         v0.x = center.u - halfDims.u;
+         v0.y = -tileSize / 2.0f;
+         v0.z = center.v + halfDims.v;
 
-      v1.x = center.u - halfDims.u;
-      v1.y = tileSize / 2.0f;
-      v1.z = center.v + halfDims.v;
+         v1.x = center.u - halfDims.u;
+         v1.y = tileSize / 2.0f;
+         v1.z = center.v + halfDims.v;
 
-      v2.x = center.u - halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.z = center.v - halfDims.v;
+         v2.x = center.u - halfDims.u;
+         v2.y = tileSize / 2.0f;
+         v2.z = center.v - halfDims.v;
 
-      v3.x = center.u - halfDims.u;
-      v3.y = -tileSize / 2.0f;
-      v3.z = center.v - halfDims.v;
+         v3.x = center.u - halfDims.u;
+         v3.y = -tileSize / 2.0f;
+         v3.z = center.v - halfDims.v;
 
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
+         fwrite(&v0, sizeof(float), 3, fp);
+         fwrite(&v1, sizeof(float), 3, fp);
+         fwrite(&v2, sizeof(float), 3, fp);
+         fwrite(&v3, sizeof(float), 3, fp);
+         ++polysWriten;
+      }
 
-      /// Front wall
-      /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u - halfDims.u;
-      v0.y = -tileSize / 2.0f;
-      v0.z = center.v + halfDims.v;
+      /// Bottom wall
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == WALKABLE) {
+         /// Write number of vertices
+         fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+         v0.x = center.u - halfDims.u;
+         v0.y = -tileSize / 2.0f;
+         v0.z = center.v + halfDims.v;
 
-      v1.x = center.u + halfDims.u;
-      v1.y = -tileSize / 2.0f;
-      v1.z = center.v + halfDims.v;
+         v1.x = center.u + halfDims.u;
+         v1.y = -tileSize / 2.0f;
+         v1.z = center.v + halfDims.v;
 
-      v2.x = center.u + halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.z = center.v + halfDims.v;
+         v2.x = center.u + halfDims.u;
+         v2.y = tileSize / 2.0f;
+         v2.z = center.v + halfDims.v;
 
-      v3.x = center.u - halfDims.u;
-      v3.y = tileSize / 2.0f;
-      v3.z = center.v + halfDims.v;
+         v3.x = center.u - halfDims.u;
+         v3.y = tileSize / 2.0f;
+         v3.z = center.v + halfDims.v;
 
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
+         fwrite(&v0, sizeof(float), 3, fp);
+         fwrite(&v1, sizeof(float), 3, fp);
+         fwrite(&v2, sizeof(float), 3, fp);
+         fwrite(&v3, sizeof(float), 3, fp);
+         ++polysWriten;
+      }
 
       /// Right wall
-      /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u + halfDims.u;
-      v0.y = -tileSize / 2.0f;
-      v0.z = center.v + halfDims.v;
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == WALKABLE) {
+         /// Write number of vertices
+         fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+         v0.x = center.u + halfDims.u;
+         v0.y = -tileSize / 2.0f;
+         v0.z = center.v + halfDims.v;
 
-      v1.x = center.u + halfDims.u;
-      v1.y = -tileSize / 2.0f;
-      v1.z = center.v - halfDims.v;
+         v1.x = center.u + halfDims.u;
+         v1.y = -tileSize / 2.0f;
+         v1.z = center.v - halfDims.v;
 
-      v2.x = center.u + halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.z = center.v - halfDims.v;
+         v2.x = center.u + halfDims.u;
+         v2.y = tileSize / 2.0f;
+         v2.z = center.v - halfDims.v;
 
-      v3.x = center.u + halfDims.u;
-      v3.y = tileSize / 2.0f;
-      v3.z = center.v + halfDims.v;
+         v3.x = center.u + halfDims.u;
+         v3.y = tileSize / 2.0f;
+         v3.z = center.v + halfDims.v;
 
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
+         fwrite(&v0, sizeof(float), 3, fp);
+         fwrite(&v1, sizeof(float), 3, fp);
+         fwrite(&v2, sizeof(float), 3, fp);
+         fwrite(&v3, sizeof(float), 3, fp);
+         ++polysWriten;
+      }
 
       /// Back wall
-      /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u + halfDims.u;
-      v0.y = -tileSize / 2.0f;
-      v0.z = center.v - halfDims.v;
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == WALKABLE) {
+         /// Write number of vertices
+         fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+         v0.x = center.u + halfDims.u;
+         v0.y = -tileSize / 2.0f;
+         v0.z = center.v - halfDims.v;
 
-      v1.x = center.u - halfDims.u;
-      v1.y = -tileSize / 2.0f;
-      v1.z = center.v - halfDims.v;
+         v1.x = center.u - halfDims.u;
+         v1.y = -tileSize / 2.0f;
+         v1.z = center.v - halfDims.v;
 
-      v2.x = center.u - halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.z = center.v - halfDims.v;
+         v2.x = center.u - halfDims.u;
+         v2.y = tileSize / 2.0f;
+         v2.z = center.v - halfDims.v;
 
-      v3.x = center.u + halfDims.u;
-      v3.y = tileSize / 2.0f;
-      v3.z = center.v - halfDims.v;
+         v3.x = center.u + halfDims.u;
+         v3.y = tileSize / 2.0f;
+         v3.z = center.v - halfDims.v;
 
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
+         fwrite(&v0, sizeof(float), 3, fp);
+         fwrite(&v1, sizeof(float), 3, fp);
+         fwrite(&v2, sizeof(float), 3, fp);
+         fwrite(&v3, sizeof(float), 3, fp);
+         ++polysWriten;
+      }
 
       /// Top/roof wall
       /// Write number of vertices
@@ -591,7 +686,10 @@ C_Map::saveGeometryToFile(const char *filename)
       fwrite(&v1, sizeof(float), 3, fp);
       fwrite(&v2, sizeof(float), 3, fp);
       fwrite(&v3, sizeof(float), 3, fp);
+      ++polysWriten;
    }
+
+//   assert(polysWriten == nPolys);
 
    fclose(fp);
    printf("Done\n");
