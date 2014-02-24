@@ -428,6 +428,45 @@ C_Map::divideAreas(void)
 
 }
 
+areaTypes_t
+C_Map::detectAreaAcrossWall(mergedTile_t *tile, int dirX, int dirY, int neighbour)
+{
+   int x = 0, y = 0;
+   int sx = tile->x;
+   int sy = tile->y;
+
+   while(x < tile->width && y < tile->height) {
+      switch(neighbour){
+      case NEIGHBOUR_ABOVE:
+         if(tiles[sx + x][sy + y + tile->height].getArea() == WALKABLE)
+            return WALKABLE;
+         break;
+
+      case NEIGHBOUR_BELOW:
+         if(tiles[sx + x][sy + y - 1].getArea() == WALKABLE)
+            return WALKABLE;
+         break;
+
+      case NEIGHBOUR_LEFT:
+         if(tiles[sx + x - 1][sy + y].getArea() == WALKABLE)
+            return WALKABLE;
+         break;
+
+      case NEIGHBOUR_RIGHT:
+         if(tiles[sx + x + tile->width][sy + y].getArea() == WALKABLE)
+            return WALKABLE;
+         break;
+
+      default: assert(0); break;
+      }
+
+      x += dirX;
+      y += dirY;
+   }
+
+   return VOID;
+}
+
 /**
  * For each merged tile, detects it's neighbour areas.
  * According to the areas found it also counts the number of polygons
@@ -435,10 +474,9 @@ C_Map::divideAreas(void)
 int
 C_Map::setNeighboutAreas(void)
 {
+   /// Initial estimation
    int nPolys = mergedTiles.size() * 5;
    int x, y;
-   areaTypes_t area;
-//   tileTypes_t type;
 
    assert(nPolys);
 
@@ -449,50 +487,39 @@ C_Map::setNeighboutAreas(void)
 
       /// Check left neigbhour
       if(x > 0) {
-         area = tiles[x - 1][y].getArea();
-//         type = tiles[x - 1][y].getType();
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = area == NAN ? WALKABLE : area;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = detectAreaAcrossWall(&mergedTiles[i], 0, 1, NEIGHBOUR_LEFT);
       } else {
-         area = VOID;
          mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = VOID;
       }
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == VOID) --nPolys;
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == VOID)
+         --nPolys;
 
       /// Check right neigbhour
       if(x + mergedTiles[i].width < TILES_ON_X - 1) {
-         area = tiles[x + mergedTiles[i].width][y].getArea();
-//         type = tiles[x + mergedTiles[i].width][y].getType();
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = area == NAN ? WALKABLE : area;
-         if(area == VOID) --nPolys;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = detectAreaAcrossWall(&mergedTiles[i], 0, 1, NEIGHBOUR_RIGHT);
       } else {
-         area = VOID;
          mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = VOID;
       }
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == VOID) --nPolys;
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == VOID)
+         --nPolys;
 
       /// Check neigbhour below
       if(y > 0) {
-         area = tiles[x][y - 1].getArea();
-//         type = tiles[x][y - 1].getType();
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = area == NAN ? WALKABLE : area;
-         if(area == VOID) --nPolys;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = detectAreaAcrossWall(&mergedTiles[i], 1, 0, NEIGHBOUR_BELOW);
       } else {
-         area = VOID;
          mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = VOID;
       }
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == VOID) --nPolys;
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == VOID)
+         --nPolys;
 
       /// Check neigbhour above
       if(y + mergedTiles[i].height < TILES_ON_Y - 1) {
-         area = tiles[x][y + mergedTiles[i].height].getArea();
-//         type = tiles[x][y + mergedTiles[i].height].getType();
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = area == NAN ? WALKABLE : area;
-         if(area == VOID) --nPolys;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = detectAreaAcrossWall(&mergedTiles[i], 1, 0, NEIGHBOUR_ABOVE);
       } else {
-         area = VOID;
          mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = VOID;
       }
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == VOID) --nPolys;
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == VOID)
+         --nPolys;
    }
 
    return nPolys;
@@ -518,7 +545,6 @@ C_Map::saveGeometryToFile(const char *filename)
    mergeTiles();
 
    nPolys = setNeighboutAreas();
-//   nPolys = mergedTiles.size() * 5;
 
    /// Print final merged tiles
    printf("\n\n");
@@ -689,7 +715,7 @@ C_Map::saveGeometryToFile(const char *filename)
       ++polysWriten;
    }
 
-//   assert(polysWriten == nPolys);
+   assert(polysWriten == nPolys);
 
    fclose(fp);
    printf("Done\n");
