@@ -75,6 +75,6 @@ private:
     */
    void floodFill(tile *startTile, areaTypes_t area);
    int setNeighboutAreas(void);
-   areaTypes_t detectAreaAcrossWall(mergedTile_t *tile, int dirX, int dirY, int neighbour);
+   areaTypes_t detectAreaAcrossWall(mergedTile_t *tile, int neighbour);
 };
 #endif

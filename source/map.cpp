@@ -429,39 +429,46 @@ C_Map::divideAreas(void)
 }
 
 areaTypes_t
-C_Map::detectAreaAcrossWall(mergedTile_t *tile, int dirX, int dirY, int neighbour)
+C_Map::detectAreaAcrossWall(mergedTile_t *tile, int neighbour)
 {
    int x = 0, y = 0;
    int sx = tile->x;
    int sy = tile->y;
+   int width = tile->width;
+   int height = tile->height;
 
-   while(x < tile->width && y < tile->height) {
-      switch(neighbour){
-      case NEIGHBOUR_ABOVE:
-         if(tiles[sx + x][sy + y + tile->height].getArea() == WALKABLE)
+   switch(neighbour) {
+   case NEIGHBOUR_ABOVE:
+      while(x < width) {
+         if(tiles[sx + x][sy + height].getArea() == WALKABLE)
             return WALKABLE;
-         break;
-
-      case NEIGHBOUR_BELOW:
-         if(tiles[sx + x][sy + y - 1].getArea() == WALKABLE)
-            return WALKABLE;
-         break;
-
-      case NEIGHBOUR_LEFT:
-         if(tiles[sx + x - 1][sy + y].getArea() == WALKABLE)
-            return WALKABLE;
-         break;
-
-      case NEIGHBOUR_RIGHT:
-         if(tiles[sx + x + tile->width][sy + y].getArea() == WALKABLE)
-            return WALKABLE;
-         break;
-
-      default: assert(0); break;
+         ++x;
       }
+      break;
 
-      x += dirX;
-      y += dirY;
+   case NEIGHBOUR_BELOW:
+      while(x < width) {
+         if(tiles[sx + x][sy - 1].getArea() == WALKABLE)
+            return WALKABLE;
+      ++x;
+      }
+      break;
+
+   case NEIGHBOUR_LEFT:
+      while(y < height) {
+         if(tiles[sx - 1][sy + y].getArea() == WALKABLE)
+            return WALKABLE;
+         ++y;
+      }
+      break;
+
+   case NEIGHBOUR_RIGHT:
+      while(y < height) {
+         if(tiles[sx + width][sy + y].getArea() == WALKABLE)
+            return WALKABLE;
+         ++y;
+      }
+      break;
    }
 
    return VOID;
@@ -487,7 +494,7 @@ C_Map::setNeighboutAreas(void)
 
       /// Check left neigbhour
       if(x > 0) {
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = detectAreaAcrossWall(&mergedTiles[i], 0, 1, NEIGHBOUR_LEFT);
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_LEFT);
       } else {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = VOID;
       }
@@ -496,7 +503,7 @@ C_Map::setNeighboutAreas(void)
 
       /// Check right neigbhour
       if(x + mergedTiles[i].width < TILES_ON_X - 1) {
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = detectAreaAcrossWall(&mergedTiles[i], 0, 1, NEIGHBOUR_RIGHT);
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_RIGHT);
       } else {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = VOID;
       }
@@ -505,7 +512,7 @@ C_Map::setNeighboutAreas(void)
 
       /// Check neigbhour below
       if(y > 0) {
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = detectAreaAcrossWall(&mergedTiles[i], 1, 0, NEIGHBOUR_BELOW);
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_BELOW);
       } else {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = VOID;
       }
@@ -514,7 +521,7 @@ C_Map::setNeighboutAreas(void)
 
       /// Check neigbhour above
       if(y + mergedTiles[i].height < TILES_ON_Y - 1) {
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = detectAreaAcrossWall(&mergedTiles[i], 1, 0, NEIGHBOUR_ABOVE);
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_ABOVE);
       } else {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = VOID;
       }
