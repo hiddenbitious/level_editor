@@ -251,10 +251,11 @@ C_Map::firstPass(int x, int y, bool **visitedTiles)
    mergedTiles.push_back(merged);
 }
 
-void
+map_bbox_t
 C_Map::mergeTiles(void)
 {
    int x, y, wallTiles = 0, wallTiles2;
+   map_bbox_t bbox = {TILES_ON_X + 1, TILES_ON_Y + 1, -1, -1};
 
    /// Erase vector
    if(mergedTiles.size())
@@ -268,6 +269,7 @@ C_Map::mergeTiles(void)
    }
 
    /// Count wall tiles
+   /// Not necessary to count wall tiles. Just to print some statistics
    for(x = 0; x < TILES_ON_X; x++) {
       for(y = 0; y < TILES_ON_Y; y++) {
          if(tiles[x][y].getType() == TILE_WALL) wallTiles++;
@@ -275,10 +277,22 @@ C_Map::mergeTiles(void)
    }
 
    /// Scan all tiles
+   /// Each time a wall tile is found scan for more wall tiles and try to
+   /// merge them into rows or columns
    for(x = 0; x < TILES_ON_X; x++) {
       for(y = 0; y < TILES_ON_Y; y++) {
          if(tiles[x][y].getType() == TILE_WALL && visitedTiles[x][y] == false)
             firstPass(x, y, visitedTiles);
+
+         /// While scanning all map tiles, it is a good oportunity
+         /// to calculate map's bounding box
+         if(tiles[x][y].getType() == TILE_WALL) {
+            if(x > bbox.maxX) bbox.maxX = x;
+            if(x < bbox.minX) bbox.minX = x;
+
+            if(y > bbox.maxY) bbox.maxY = y;
+            if(y < bbox.minY) bbox.minY = y;
+         }
       }
    }
 
@@ -288,7 +302,7 @@ C_Map::mergeTiles(void)
 //   for(x = 0; x < mergedTiles.size(); ++x)
 //      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
 
-   /// Try to merge more
+   /// Try to merge the rows and columns into blocks
    secondPass();
 
 //   /// Print merged tiles after 2nd pass
@@ -309,6 +323,8 @@ C_Map::mergeTiles(void)
    for(x = 0; x < TILES_ON_X; x++)
       delete[] visitedTiles[x];
    delete[] visitedTiles;
+
+   return bbox;
 }
 
 void
@@ -388,6 +404,7 @@ C_Map::divideAreas(void)
 
    assert(found);
 
+   /// After finding the tile perform a flood fill on it
    printf("Start tile found at (%d, %d)\n", x, y);
    floodFill(&tiles[x][y], WALKABLE);
 
@@ -414,6 +431,7 @@ C_Map::divideAreas(void)
 
    assert(found);
 
+   /// After finding the tile perform a flood fill on it
    printf("Found one VOID tile at (%d, %d)\n", x, y);
    floodFill(&tiles[x][y], VOID);
 
@@ -425,9 +443,14 @@ C_Map::divideAreas(void)
 //      }
 //   }
 //   printf("*****");
-
 }
 
+/**
+ * Swipes a merged tile's wall all neighbour tiles.
+ * If all tiles are VOID then this wall is considered to face outside the map
+ * and VOID is returned, else if at least 1 WALLKABLE tile is found
+ * the wall is considered to be facing inside the map
+ */
 areaTypes_t
 C_Map::detectAreaAcrossWall(mergedTile_t *tile, int neighbour)
 {
@@ -540,17 +563,20 @@ C_Map::saveGeometryToFile(const char *filename)
    /// Shadow global variable.
    const float tileSize = 20.0f;
    int nPolys, polysWriten = 0;
+   map_bbox_t bbox;
 
    C_Vertex v1, v2, v3, v0;
    C_TexCoord center;
    C_TexCoord halfDims;
 
-   /// Divide map into areas
+   /// Merge tiles into columns, rows or blocks of wall tiles.
+   bbox = mergeTiles();
+
+   /// Divide map into areas, walkable and void
    divideAreas();
 
-   /// Merge tiles
-   mergeTiles();
-
+   /// Detect merged tiles' surrounding areas and count the final poly count
+   /// (after removing walls that face outside the mapS
    nPolys = setNeighboutAreas();
 
    /// Print final merged tiles
@@ -582,31 +608,37 @@ C_Map::saveGeometryToFile(const char *filename)
       /// For merged tile there are 5 polys
       /// 4 walls and 1 roof
 
+//      float maxX = bbox.maxX * tileSize;
+//      float minX = bbox.minX * tileSize;
+//
+//      float maxY = bbox.maxY * tileSize;
+//      float minY = bbox.minY * tileSize;
+
       /// Calculate vertices
       halfDims.u = mergedTiles[i].width * tileSize / 2.0f;
       halfDims.v = mergedTiles[i].height * tileSize / 2.0f;
-      center.u = mergedTiles[i].x * tileSize + halfDims.u;
-      center.v = mergedTiles[i].y * tileSize + halfDims.v;
+      center.u = /*minX + maxX - */(mergedTiles[i].x * tileSize + halfDims.u);
+      center.v = /*minY + maxY - */(mergedTiles[i].y * tileSize + halfDims.v);
 
       /// Left wall
       if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-         v0.x = center.u - halfDims.u;
+         v0.z = center.u - halfDims.u;
          v0.y = -tileSize / 2.0f;
-         v0.z = center.v + halfDims.v;
+         v0.x = center.v + halfDims.v;
 
-         v1.x = center.u - halfDims.u;
+         v1.z = center.u - halfDims.u;
          v1.y = tileSize / 2.0f;
-         v1.z = center.v + halfDims.v;
+         v1.x = center.v + halfDims.v;
 
-         v2.x = center.u - halfDims.u;
+         v2.z = center.u - halfDims.u;
          v2.y = tileSize / 2.0f;
-         v2.z = center.v - halfDims.v;
+         v2.x = center.v - halfDims.v;
 
-         v3.x = center.u - halfDims.u;
+         v3.z = center.u - halfDims.u;
          v3.y = -tileSize / 2.0f;
-         v3.z = center.v - halfDims.v;
+         v3.x = center.v - halfDims.v;
 
          fwrite(&v0, sizeof(float), 3, fp);
          fwrite(&v1, sizeof(float), 3, fp);
@@ -616,24 +648,24 @@ C_Map::saveGeometryToFile(const char *filename)
       }
 
       /// Bottom wall
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == WALKABLE) {
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-         v0.x = center.u - halfDims.u;
+         v0.z = center.u - halfDims.u;
          v0.y = -tileSize / 2.0f;
-         v0.z = center.v + halfDims.v;
+         v0.x = center.v + halfDims.v;
 
-         v1.x = center.u + halfDims.u;
+         v1.z = center.u + halfDims.u;
          v1.y = -tileSize / 2.0f;
-         v1.z = center.v + halfDims.v;
+         v1.x = center.v + halfDims.v;
 
-         v2.x = center.u + halfDims.u;
+         v2.z = center.u + halfDims.u;
          v2.y = tileSize / 2.0f;
-         v2.z = center.v + halfDims.v;
+         v2.x = center.v + halfDims.v;
 
-         v3.x = center.u - halfDims.u;
+         v3.z = center.u - halfDims.u;
          v3.y = tileSize / 2.0f;
-         v3.z = center.v + halfDims.v;
+         v3.x = center.v + halfDims.v;
 
          fwrite(&v0, sizeof(float), 3, fp);
          fwrite(&v1, sizeof(float), 3, fp);
@@ -646,21 +678,21 @@ C_Map::saveGeometryToFile(const char *filename)
       if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-         v0.x = center.u + halfDims.u;
+         v0.z = center.u + halfDims.u;
          v0.y = -tileSize / 2.0f;
-         v0.z = center.v + halfDims.v;
+         v0.x = center.v + halfDims.v;
 
-         v1.x = center.u + halfDims.u;
+         v1.z = center.u + halfDims.u;
          v1.y = -tileSize / 2.0f;
-         v1.z = center.v - halfDims.v;
+         v1.x = center.v - halfDims.v;
 
-         v2.x = center.u + halfDims.u;
+         v2.z = center.u + halfDims.u;
          v2.y = tileSize / 2.0f;
-         v2.z = center.v - halfDims.v;
+         v2.x = center.v - halfDims.v;
 
-         v3.x = center.u + halfDims.u;
+         v3.z = center.u + halfDims.u;
          v3.y = tileSize / 2.0f;
-         v3.z = center.v + halfDims.v;
+         v3.x = center.v + halfDims.v;
 
          fwrite(&v0, sizeof(float), 3, fp);
          fwrite(&v1, sizeof(float), 3, fp);
@@ -670,24 +702,24 @@ C_Map::saveGeometryToFile(const char *filename)
       }
 
       /// Back wall
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == WALKABLE) {
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-         v0.x = center.u + halfDims.u;
+         v0.z = center.u + halfDims.u;
          v0.y = -tileSize / 2.0f;
-         v0.z = center.v - halfDims.v;
+         v0.x = center.v - halfDims.v;
 
-         v1.x = center.u - halfDims.u;
+         v1.z = center.u - halfDims.u;
          v1.y = -tileSize / 2.0f;
-         v1.z = center.v - halfDims.v;
+         v1.x = center.v - halfDims.v;
 
-         v2.x = center.u - halfDims.u;
+         v2.z = center.u - halfDims.u;
          v2.y = tileSize / 2.0f;
-         v2.z = center.v - halfDims.v;
+         v2.x = center.v - halfDims.v;
 
-         v3.x = center.u + halfDims.u;
+         v3.z = center.u + halfDims.u;
          v3.y = tileSize / 2.0f;
-         v3.z = center.v - halfDims.v;
+         v3.x = center.v - halfDims.v;
 
          fwrite(&v0, sizeof(float), 3, fp);
          fwrite(&v1, sizeof(float), 3, fp);
@@ -699,21 +731,21 @@ C_Map::saveGeometryToFile(const char *filename)
       /// Top/roof wall
       /// Write number of vertices
       fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.x = center.u + halfDims.u;
+      v0.z = center.u + halfDims.u;
       v0.y = tileSize / 2.0f;
-      v0.z = center.v + halfDims.v;
+      v0.x = center.v + halfDims.v;
 
-      v1.x = center.u + halfDims.u;
+      v1.z = center.u + halfDims.u;
       v1.y = tileSize / 2.0f;
-      v1.z = center.v - halfDims.v;
+      v1.x = center.v - halfDims.v;
 
-      v2.x = center.u - halfDims.u;
+      v2.z = center.u - halfDims.u;
       v2.y = tileSize / 2.0f;
-      v2.z = center.v - halfDims.v;
+      v2.x = center.v - halfDims.v;
 
-      v3.x = center.u - halfDims.u;
+      v3.z = center.u - halfDims.u;
       v3.y = tileSize / 2.0f;
-      v3.z = center.v + halfDims.v;
+      v3.x = center.v + halfDims.v;
 
       fwrite(&v0, sizeof(float), 3, fp);
       fwrite(&v1, sizeof(float), 3, fp);

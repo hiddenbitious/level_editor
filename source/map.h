@@ -26,6 +26,10 @@ typedef struct {
    areaTypes_t neighbourAreas[4];
 } mergedTile_t;
 
+typedef struct {
+   int minX, minY, maxX, maxY;
+} map_bbox_t;
+
 class C_Map {
 public:
    C_Map(void);
@@ -43,7 +47,7 @@ public:
     * The purpose is to detect wall tiles that form
     * rows, columns or even blocks and merge them into one block
     */
-   void mergeTiles(void);
+   map_bbox_t mergeTiles(void);
 
 private:
    /// Holds merged tiles after 1st and 2nd pass.
@@ -74,7 +78,21 @@ private:
     * The flood begins from startTile
     */
    void floodFill(tile *startTile, areaTypes_t area);
+
+   /**
+    * After merging tiles into blocks and after divinding the map into areas
+    * this function detects the areas that surrounds each merged tile block.
+    * The purpose is to further reduce the polygon by removing the wall edges
+    * that are facing outside the map.
+    */
    int setNeighboutAreas(void);
+
+   /**
+    * Swipes a merged tile's wall all neighbour tiles.
+    * If all tiles are VOID then this wall is considered to face outside the map
+    * and VOID is returned, else if at least 1 WALLKABLE tile is found
+    * the wall is considered to be facing inside the map
+    */
    areaTypes_t detectAreaAcrossWall(mergedTile_t *tile, int neighbour);
 };
 #endif
