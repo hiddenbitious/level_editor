@@ -1,7 +1,7 @@
 level_editor
 ============
 
-Level editor for old school dungeon crawling games.
+Level / map editor for old school dungeon crawling games.
 
 Create 2D maps for old school dungeon crawling / rogue like games.
 
