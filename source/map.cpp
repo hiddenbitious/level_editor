@@ -352,7 +352,7 @@ C_Map::floodFill(tile *startTile, areaTypes_t area)
       /// Add more tiles
       if(x < TILES_ON_X - 1) {
          if(tiles[x + 1][y].getArea() == NAN &&
-            tiles[x + 1][y].getType() == TILE_0) {
+            tiles[x + 1][y].getType() != TILE_WALL) {
             tilesToExamine.push(&tiles[x + 1][y]);
             tiles[x + 1][y].setArea(area);
          }
@@ -360,7 +360,7 @@ C_Map::floodFill(tile *startTile, areaTypes_t area)
 
       if(x > 0) {
          if(tiles[x - 1][y].getArea() == NAN &&
-            tiles[x - 1][y].getType() == TILE_0) {
+            tiles[x - 1][y].getType() != TILE_WALL) {
             tilesToExamine.push(&tiles[x - 1][y]);
             tiles[x - 1][y].setArea(area);
          }
@@ -368,7 +368,7 @@ C_Map::floodFill(tile *startTile, areaTypes_t area)
 
       if(y < TILES_ON_Y - 1) {
          if(tiles[x][y + 1].getArea() == NAN &&
-            tiles[x][y + 1].getType() == TILE_0) {
+            tiles[x][y + 1].getType() != TILE_WALL) {
             tilesToExamine.push(&tiles[x][y + 1]);
             tiles[x][y + 1].setArea(area);
          }
@@ -376,7 +376,7 @@ C_Map::floodFill(tile *startTile, areaTypes_t area)
 
       if(y > 0) {
          if(tiles[x][y - 1].getArea() == NAN &&
-            tiles[x][y - 1].getType() == TILE_0) {
+            tiles[x][y - 1].getType() != TILE_WALL) {
             tilesToExamine.push(&tiles[x][y - 1]);
             tiles[x][y - 1].setArea(area);
          }
