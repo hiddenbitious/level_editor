@@ -1,4 +1,4 @@
-CC=clang++
+CC=g++
 CFLAGS=-c -Wall -O0 -g -Wno-unused-result -Wno-sign-compare
 
 LDFLAGS=-lm -lGL -lglut -lGLU

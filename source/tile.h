@@ -3,9 +3,10 @@
 
 #include "globals.h"
 
-typedef enum {NAN,          /// Not categorized yet
-              VOID,
-              WALKABLE,
+typedef enum {AREA_NAN,          /// Not categorized yet
+              AREA_VOID,
+              AREA_WALKABLE,
+              AREA_WALL,
 
               N_AREA_TYPES} areaTypes_t;
 
@@ -53,7 +54,7 @@ public:
 
    inline void setCoordX(int x) { this->x = x; }
    inline void setCoordY(int y) { this->y = y; }
-   inline void setType(tileTypes_t type){ this->type = type; }
+   inline void setType(tileTypes_t type){ this->type = type; area = (type == TILE_WALL) ? AREA_WALL : AREA_NAN; }
    inline tileTypes_t getType(void) { return this->type; }
    inline void setArea(areaTypes_t area){ this->area = area; }
    inline areaTypes_t getArea(void) { return this->area; }

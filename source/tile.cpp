@@ -6,7 +6,7 @@ tile::tile(void)
    y = 0;
    parameter = "";
    hasParameter = false;
-   area = NAN;
+   area = AREA_NAN;
    type = TILE_0;
 }
 
@@ -16,7 +16,7 @@ tile::tile(int _x, int _y)
    y = _y;
    parameter = "";
    hasParameter = false;
-   area = NAN;
+   area = AREA_NAN;
    type = TILE_0;
 }
 

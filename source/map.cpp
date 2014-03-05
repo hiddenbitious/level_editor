@@ -11,7 +11,7 @@ C_Map::C_Map(void)
 		for(int y = 0; y < TILES_ON_Y; y++) {
 		   tiles[x][y].setCoordX(x);
 		   tiles[x][y].setCoordY(y);
-		   tiles[x][y].setArea(NAN);
+		   tiles[x][y].setArea(AREA_NAN);
 		   tiles[x][y].hasParameter = false;
 		}
 	}
@@ -244,10 +244,10 @@ C_Map::firstPass(int x, int y, bool **visitedTiles)
       merged.height = height;
    }
 
-   merged.neighbourAreas[0] = NAN;
-   merged.neighbourAreas[1] = NAN;
-   merged.neighbourAreas[2] = NAN;
-   merged.neighbourAreas[3] = NAN;
+   merged.neighbourAreas[0] = AREA_NAN;
+   merged.neighbourAreas[1] = AREA_NAN;
+   merged.neighbourAreas[2] = AREA_NAN;
+   merged.neighbourAreas[3] = AREA_NAN;
    mergedTiles.push_back(merged);
 }
 
@@ -351,32 +351,28 @@ C_Map::floodFill(tile *startTile, areaTypes_t area)
 
       /// Add more tiles
       if(x < TILES_ON_X - 1) {
-         if(tiles[x + 1][y].getArea() == NAN &&
-            tiles[x + 1][y].getType() != TILE_WALL) {
+         if(tiles[x + 1][y].getArea() == AREA_NAN && tiles[x + 1][y].getType() != TILE_WALL) {
             tilesToExamine.push(&tiles[x + 1][y]);
             tiles[x + 1][y].setArea(area);
          }
       }
 
       if(x > 0) {
-         if(tiles[x - 1][y].getArea() == NAN &&
-            tiles[x - 1][y].getType() != TILE_WALL) {
+         if(tiles[x - 1][y].getArea() == AREA_NAN && tiles[x - 1][y].getType() != TILE_WALL) {
             tilesToExamine.push(&tiles[x - 1][y]);
             tiles[x - 1][y].setArea(area);
          }
       }
 
       if(y < TILES_ON_Y - 1) {
-         if(tiles[x][y + 1].getArea() == NAN &&
-            tiles[x][y + 1].getType() != TILE_WALL) {
+         if(tiles[x][y + 1].getArea() == AREA_NAN && tiles[x][y + 1].getType() != TILE_WALL) {
             tilesToExamine.push(&tiles[x][y + 1]);
             tiles[x][y + 1].setArea(area);
          }
       }
 
       if(y > 0) {
-         if(tiles[x][y - 1].getArea() == NAN &&
-            tiles[x][y - 1].getType() != TILE_WALL) {
+         if(tiles[x][y - 1].getArea() == AREA_NAN && tiles[x][y - 1].getType() != TILE_WALL) {
             tilesToExamine.push(&tiles[x][y - 1]);
             tiles[x][y - 1].setArea(area);
          }
@@ -406,22 +402,22 @@ C_Map::divideAreas(void)
 
    /// After finding the tile perform a flood fill on it
    printf("Start tile found at (%d, %d)\n", x, y);
-   floodFill(&tiles[x][y], WALKABLE);
+   floodFill(&tiles[x][y], AREA_WALKABLE);
 
 //   printf("\n*****\nWalkable tiles:\n");
 //   for(x = 0; x < TILES_ON_X; ++x) {
 //      for(y = 0; y < TILES_ON_Y; ++y) {
-//         if(tiles[x][y].getArea() == WALKABLE)
+//         if(tiles[x][y].getArea() == AREA_WALKABLE)
 //            printf("   (%d, %d)\n", x, y);
 //      }
 //   }
 //   printf("*****");
 
-   /// Find one tile that is 100% a VOID area and flood fill
+   /// Find one tile that is 100% a AREA_VOID area and flood fill
    found = false;
    for(x = 0; x < TILES_ON_X && !found; ++x) {
       for(y = 0; y < TILES_ON_Y; ++y) {
-         if(tiles[x][y].getType() == TILE_0 && tiles[x][y].getArea() == NAN) {
+         if(tiles[x][y].getType() == TILE_0 && tiles[x][y].getArea() == AREA_NAN) {
             found = true;
             --x;
             break;
@@ -432,13 +428,13 @@ C_Map::divideAreas(void)
    assert(found);
 
    /// After finding the tile perform a flood fill on it
-   printf("Found one VOID tile at (%d, %d)\n", x, y);
-   floodFill(&tiles[x][y], VOID);
+   printf("Found one AREA_VOID tile at (%d, %d)\n", x, y);
+   floodFill(&tiles[x][y], AREA_VOID);
 
 //   printf("\n*****\nVoid tiles:\n");
 //   for(x = 0; x < TILES_ON_X; ++x) {
 //      for(y = 0; y < TILES_ON_Y; ++y) {
-//         if(tiles[x][y].getArea() == VOID)
+//         if(tiles[x][y].getArea() == AREA_VOID)
 //            printf("   (%d, %d)\n", x, y);
 //      }
 //   }
@@ -447,8 +443,8 @@ C_Map::divideAreas(void)
 
 /**
  * Swipes a merged tile's wall all neighbour tiles.
- * If all tiles are VOID then this wall is considered to face outside the map
- * and VOID is returned, else if at least 1 WALLKABLE tile is found
+ * If all tiles are AREA_VOID then this wall is considered to face outside the map
+ * and AREA_VOID is returned, else if at least 1 WALLKABLE tile is found
  * the wall is considered to be facing inside the map
  */
 areaTypes_t
@@ -462,39 +458,55 @@ C_Map::detectAreaAcrossWall(mergedTile_t *tile, int neighbour)
 
    switch(neighbour) {
    case NEIGHBOUR_ABOVE:
-      while(x < width) {
-         if(tiles[sx + x][sy + height].getArea() == WALKABLE)
-            return WALKABLE;
-         ++x;
+      if(width > 1) {
+         while(x < width) {
+            if(tiles[sx + x][sy + height].getArea() == AREA_WALKABLE)
+               return AREA_WALKABLE;
+            ++x;
+         }
+      } else {
+         return tiles[sx][sy + height].getArea();
       }
       break;
 
    case NEIGHBOUR_BELOW:
-      while(x < width) {
-         if(tiles[sx + x][sy - 1].getArea() == WALKABLE)
-            return WALKABLE;
-      ++x;
+      if(width > 1) {
+         while(x < width) {
+            if(tiles[sx + x][sy - 1].getArea() == AREA_WALKABLE)
+               return AREA_WALKABLE;
+            ++x;
+         }
+      } else {
+         return tiles[sx][sy - 1].getArea();
       }
       break;
 
    case NEIGHBOUR_LEFT:
-      while(y < height) {
-         if(tiles[sx - 1][sy + y].getArea() == WALKABLE)
-            return WALKABLE;
-         ++y;
+      if(height > 1) {
+         while(y < height) {
+            if(tiles[sx - 1][sy + y].getArea() == AREA_WALKABLE)
+               return AREA_WALKABLE;
+            ++y;
+         }
+      } else {
+         return tiles[sx - 1][sy].getArea();
       }
       break;
 
    case NEIGHBOUR_RIGHT:
-      while(y < height) {
-         if(tiles[sx + width][sy + y].getArea() == WALKABLE)
-            return WALKABLE;
-         ++y;
+      if(height > 1) {
+         while(y < height) {
+            if(tiles[sx + width][sy + y].getArea() == AREA_WALKABLE)
+               return AREA_WALKABLE;
+            ++y;
+         }
+      } else {
+         return tiles[sx + width][sy].getArea();
       }
       break;
    }
 
-   return VOID;
+   return AREA_VOID;
 }
 
 /**
@@ -519,36 +531,47 @@ C_Map::setNeighboutAreas(void)
       if(x > 0) {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_LEFT);
       } else {
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = VOID;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = AREA_VOID;
       }
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == VOID)
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == AREA_VOID ||
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == AREA_WALL)
          --nPolys;
 
       /// Check right neigbhour
       if(x + mergedTiles[i].width < TILES_ON_X - 1) {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_RIGHT);
       } else {
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = VOID;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = AREA_VOID;
       }
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == VOID)
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == AREA_VOID ||
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == AREA_WALL)
          --nPolys;
 
       /// Check neigbhour below
       if(y > 0) {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_BELOW);
       } else {
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = VOID;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = AREA_VOID;
       }
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == VOID)
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == AREA_VOID ||
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == AREA_WALL)
          --nPolys;
 
       /// Check neigbhour above
       if(y + mergedTiles[i].height < TILES_ON_Y - 1) {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_ABOVE);
       } else {
-         mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = VOID;
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = AREA_VOID;
       }
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == VOID)
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == AREA_VOID ||
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == AREA_WALL)
+         --nPolys;
+
+      /// If at least one neighbour area is AREA_VOID then the roof is omited
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == AREA_VOID ||
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == AREA_VOID ||
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT]  == AREA_VOID ||
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == AREA_VOID)
          --nPolys;
    }
 
@@ -621,7 +644,7 @@ C_Map::saveGeometryToFile(const char *filename)
       center.v = /*minY + maxY - */(mergedTiles[i].y * tileSize + halfDims.v);
 
       /// Left wall
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == WALKABLE) {
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == AREA_WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
          v0.z = center.u - halfDims.u;
@@ -648,7 +671,7 @@ C_Map::saveGeometryToFile(const char *filename)
       }
 
       /// Bottom wall
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == WALKABLE) {
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == AREA_WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
          v0.z = center.u - halfDims.u;
@@ -675,7 +698,7 @@ C_Map::saveGeometryToFile(const char *filename)
       }
 
       /// Right wall
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == WALKABLE) {
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == AREA_WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
          v0.z = center.u + halfDims.u;
@@ -702,7 +725,7 @@ C_Map::saveGeometryToFile(const char *filename)
       }
 
       /// Back wall
-      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == WALKABLE) {
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == AREA_WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
          v0.z = center.u + halfDims.u;
@@ -730,28 +753,34 @@ C_Map::saveGeometryToFile(const char *filename)
 
       /// Top/roof wall
       /// Write number of vertices
-      fwrite(&verticesPerPoly, sizeof(int), 1, fp);
-      v0.z = center.u + halfDims.u;
-      v0.y = tileSize / 2.0f;
-      v0.x = center.v + halfDims.v;
+      /// If at least one neighbour area is AREA_VOID then the roof is omited
+      if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] != AREA_VOID &&
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] != AREA_VOID &&
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT]  != AREA_VOID &&
+         mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] != AREA_VOID) {
+         fwrite(&verticesPerPoly, sizeof(int), 1, fp);
+         v0.z = center.u + halfDims.u;
+         v0.y = tileSize / 2.0f;
+         v0.x = center.v + halfDims.v;
 
-      v1.z = center.u + halfDims.u;
-      v1.y = tileSize / 2.0f;
-      v1.x = center.v - halfDims.v;
+         v1.z = center.u + halfDims.u;
+         v1.y = tileSize / 2.0f;
+         v1.x = center.v - halfDims.v;
 
-      v2.z = center.u - halfDims.u;
-      v2.y = tileSize / 2.0f;
-      v2.x = center.v - halfDims.v;
+         v2.z = center.u - halfDims.u;
+         v2.y = tileSize / 2.0f;
+         v2.x = center.v - halfDims.v;
 
-      v3.z = center.u - halfDims.u;
-      v3.y = tileSize / 2.0f;
-      v3.x = center.v + halfDims.v;
+         v3.z = center.u - halfDims.u;
+         v3.y = tileSize / 2.0f;
+         v3.x = center.v + halfDims.v;
 
-      fwrite(&v0, sizeof(float), 3, fp);
-      fwrite(&v1, sizeof(float), 3, fp);
-      fwrite(&v2, sizeof(float), 3, fp);
-      fwrite(&v3, sizeof(float), 3, fp);
-      ++polysWriten;
+         fwrite(&v0, sizeof(float), 3, fp);
+         fwrite(&v1, sizeof(float), 3, fp);
+         fwrite(&v2, sizeof(float), 3, fp);
+         fwrite(&v3, sizeof(float), 3, fp);
+         ++polysWriten;
+      }
    }
 
    assert(polysWriten == nPolys);
