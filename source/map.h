@@ -85,7 +85,7 @@ private:
     * The purpose is to further reduce the polygon by removing the wall edges
     * that are facing outside the map.
     */
-   int setNeighboutAreas(void);
+   int setNeighbourAreas(void);
 
    /**
     * Swipes a merged tile's wall all neighbour tiles.

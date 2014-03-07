@@ -3,10 +3,10 @@
 
 #include "globals.h"
 
-typedef enum {AREA_NAN,          /// Not categorized yet
-              AREA_VOID,
-              AREA_WALKABLE,
-              AREA_WALL,
+typedef enum {AREA_NAN,          /// 0 Not categorized yet
+              AREA_VOID,         /// 1
+              AREA_WALKABLE,     /// 2
+              AREA_WALL,         /// 3
 
               N_AREA_TYPES} areaTypes_t;
 

@@ -225,19 +225,19 @@ C_Map::firstPass(int x, int y, bool **visitedTiles)
    visitedTiles[xx][yy] = true;
 
    /// Scan row
-   if(yy == TILES_ON_Y - 1 || tiles[xx + 1][yy].getType() == TILE_WALL) {
+   if((tiles[xx + 1][yy].getType() == TILE_WALL && !visitedTiles[xx + 1][yy]) /*|| yy == TILES_ON_Y - 1*/) {
       while(tiles[xx + 1][yy].getType() == TILE_WALL && xx <= TILES_ON_X - 2) {
-         xx++;
-         width++;
+         ++xx;
+         ++width;
          visitedTiles[xx][yy] = true;
       }
 
       merged.width = width;
-   } else if(xx == TILES_ON_X - 1 || tiles[xx][yy + 1].getType() == TILE_WALL) {
+   } else if((tiles[xx][yy + 1].getType() == TILE_WALL && !visitedTiles[xx][yy + 1]) /*|| xx == TILES_ON_X - 1*/) {
       /// ... else scan the column
       while(tiles[xx][yy + 1].getType() == TILE_WALL && yy <= TILES_ON_Y - 2) {
-         yy++;
-         height++;
+         ++yy;
+         ++height;
          visitedTiles[xx][yy] = true;
       }
 
@@ -455,58 +455,72 @@ C_Map::detectAreaAcrossWall(mergedTile_t *tile, int neighbour)
    int sy = tile->y;
    int width = tile->width;
    int height = tile->height;
+   areaTypes_t area = AREA_VOID;
 
    switch(neighbour) {
    case NEIGHBOUR_ABOVE:
       if(width > 1) {
          while(x < width) {
-            if(tiles[sx + x][sy + height].getArea() == AREA_WALKABLE)
-               return AREA_WALKABLE;
+            if(tiles[sx + x][sy + height].getArea() == AREA_WALKABLE) {
+               area = AREA_WALKABLE;
+               goto done;
+            }
             ++x;
          }
       } else {
-         return tiles[sx][sy + height].getArea();
+         area = tiles[sx][sy + height].getArea();
+         goto done;
       }
       break;
 
    case NEIGHBOUR_BELOW:
       if(width > 1) {
          while(x < width) {
-            if(tiles[sx + x][sy - 1].getArea() == AREA_WALKABLE)
-               return AREA_WALKABLE;
+            if(tiles[sx + x][sy - 1].getArea() == AREA_WALKABLE) {
+               area = AREA_WALKABLE;
+               goto done;
+            }
             ++x;
          }
       } else {
-         return tiles[sx][sy - 1].getArea();
+         area = tiles[sx][sy - 1].getArea();
+         goto done;
       }
       break;
 
    case NEIGHBOUR_LEFT:
       if(height > 1) {
          while(y < height) {
-            if(tiles[sx - 1][sy + y].getArea() == AREA_WALKABLE)
-               return AREA_WALKABLE;
+            if(tiles[sx - 1][sy + y].getArea() == AREA_WALKABLE) {
+               area = AREA_WALKABLE;
+               goto done;
+            }
             ++y;
          }
       } else {
-         return tiles[sx - 1][sy].getArea();
+         area = tiles[sx - 1][sy].getArea();
+         goto done;
       }
       break;
 
    case NEIGHBOUR_RIGHT:
       if(height > 1) {
          while(y < height) {
-            if(tiles[sx + width][sy + y].getArea() == AREA_WALKABLE)
-               return AREA_WALKABLE;
+            if(tiles[sx + width][sy + y].getArea() == AREA_WALKABLE) {
+               area = AREA_WALKABLE;
+               goto done;
+            }
             ++y;
          }
       } else {
-         return tiles[sx + width][sy].getArea();
+         area = tiles[sx + width][sy].getArea();
+         goto done;
       }
       break;
    }
 
-   return AREA_VOID;
+   done:
+   return area != AREA_NAN ? area : AREA_VOID;
 }
 
 /**
@@ -514,7 +528,7 @@ C_Map::detectAreaAcrossWall(mergedTile_t *tile, int neighbour)
  * According to the areas found it also counts the number of polygons
  */
 int
-C_Map::setNeighboutAreas(void)
+C_Map::setNeighbourAreas(void)
 {
    /// Initial estimation
    int nPolys = mergedTiles.size() * 5;
@@ -526,6 +540,8 @@ C_Map::setNeighboutAreas(void)
    for(unsigned int i = 0; i < mergedTiles.size(); i++) {
       x = mergedTiles[i].x;
       y = mergedTiles[i].y;
+      if(x == 1 && y == 12)
+         printf("wtf\n");
 
       /// Check left neigbhour
       if(x > 0) {
@@ -600,7 +616,7 @@ C_Map::saveGeometryToFile(const char *filename)
 
    /// Detect merged tiles' surrounding areas and count the final poly count
    /// (after removing walls that face outside the mapS
-   nPolys = setNeighboutAreas();
+   nPolys = setNeighbourAreas();
 
    /// Print final merged tiles
    printf("\n\n");
@@ -644,6 +660,7 @@ C_Map::saveGeometryToFile(const char *filename)
       center.v = /*minY + maxY - */(mergedTiles[i].y * tileSize + halfDims.v);
 
       /// Left wall
+      assert(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] != AREA_NAN);
       if(mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == AREA_WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
@@ -671,6 +688,7 @@ C_Map::saveGeometryToFile(const char *filename)
       }
 
       /// Bottom wall
+      assert(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] != AREA_NAN);
       if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == AREA_WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
@@ -698,6 +716,7 @@ C_Map::saveGeometryToFile(const char *filename)
       }
 
       /// Right wall
+      assert(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] != AREA_NAN);
       if(mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == AREA_WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);
@@ -725,6 +744,7 @@ C_Map::saveGeometryToFile(const char *filename)
       }
 
       /// Back wall
+      assert(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] != AREA_NAN);
       if(mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == AREA_WALKABLE) {
          /// Write number of vertices
          fwrite(&verticesPerPoly, sizeof(int), 1, fp);

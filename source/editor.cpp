@@ -430,7 +430,8 @@ Draw(void)
 	glEnable(GL_ALPHA);
 
 	glColor3f(0.0f, 0.0f, 0.0f);
-	glPrint(0, windowSize_y - 20, "Tile x: %i Tile y: %i Type: %i", mouseTile_x, mouseTile_y, map->tiles[mouseTile_x][mouseTile_y].getType());
+	glPrint(0, windowSize_y - 20, "Tile x: %i Tile y: %i Type: %i Area: %d",
+	        mouseTile_x, mouseTile_y, map->tiles[mouseTile_x][mouseTile_y].getType(), map->tiles[mouseTile_x][mouseTile_y].getArea());
 	if(tileSelection > 0) {
 		glColor3fv(selections[tileSelection-1]);
 		glPrint(0, windowSize_y - 40, "Current tile type: %s", options[tileSelection - 1].c_str());
