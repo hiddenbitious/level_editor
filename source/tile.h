@@ -3,6 +3,11 @@
 
 #include "globals.h"
 
+#define NEIGHBOUR_LEFT                0
+#define NEIGHBOUR_RIGHT               1
+#define NEIGHBOUR_BELOW               2
+#define NEIGHBOUR_ABOVE               3
+
 typedef enum {AREA_NAN,          /// 0 Not categorized yet
               AREA_VOID,         /// 1
               AREA_WALKABLE,     /// 2
@@ -22,11 +27,11 @@ typedef enum {TILE_0,
               N_TILE_TYPES} tileTypes_t;
 
 /// RGB colors of the available tile types
-static const float selections[N_TILE_TYPES + 1][3] = { {1.0f,	0.0f,	0.0f},	//Wall
-                                                       {0.0f,	1.0f,	0.0f},	//Staircase
-                                                       {0.0f,	0.0f,	1.0f},	//Door
-                                                       {0.0f,	0.0f,	0.0f},	//Monster (type can be a parameter)
-                                                       {1.0f,	0.0f,	1.0f},	//Whatever
+static const float selections[N_TILE_TYPES + 1][3] = { {1.0f,	0.0f,	0.0f},	// Wall
+                                                       {0.0f,	1.0f,	0.0f},	// Staircase
+                                                       {0.0f,	0.0f,	1.0f},	// Door
+                                                       {0.0f,	0.0f,	0.0f},	// Monster (type can be a parameter)
+                                                       {1.0f,	0.0f,	1.0f},	// Whatever
                                                        {1.0f,	1.0f,	0.0f},
                                                        {0.0f,	1.0f,	1.0f},
                                                        {1.0f,	1.0f,	1.0f},

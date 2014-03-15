@@ -13,11 +13,6 @@
 #define TILES_ON_X                   80
 #define TILES_ON_Y                   50
 
-#define NEIGHBOUR_LEFT                0
-#define NEIGHBOUR_RIGHT               1
-#define NEIGHBOUR_BELOW               2
-#define NEIGHBOUR_ABOVE               3
-
 typedef struct {
    /// Tile's start coordinates
    int x, y;
@@ -34,10 +29,17 @@ class C_Map {
 public:
    C_Map(void);
    ~C_Map(void);
+   void drawGrid(float tileSize);
    bool readMap(const char *filename);
    bool saveMap(const char *filename);
-   void saveGeometryToFile(const char *filename);
-   void drawGrid(float tileSize);
+
+   /**
+    * Writes to file the final geometry need to build the BSP tree
+    * for the map
+    */
+   void saveBspGeometryToFile(const char *filename);
+
+   void saveAreasToFile(const char *filename);
 
    /// All map tiles
    tile tiles[TILES_ON_X][TILES_ON_Y];

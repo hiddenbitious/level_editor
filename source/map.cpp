@@ -530,6 +530,8 @@ C_Map::detectAreaAcrossWall(mergedTile_t *tile, int neighbour)
 int
 C_Map::setNeighbourAreas(void)
 {
+   assert(mergedTiles.size());
+
    /// Initial estimation
    int nPolys = mergedTiles.size() * 5;
    int x, y;
@@ -595,7 +597,7 @@ C_Map::setNeighbourAreas(void)
 }
 
 void
-C_Map::saveGeometryToFile(const char *filename)
+C_Map::saveBspGeometryToFile(const char *filename)
 {
    const int verticesPerPoly = 4;
    const int nBrushes = 1;
@@ -615,7 +617,7 @@ C_Map::saveGeometryToFile(const char *filename)
    divideAreas();
 
    /// Detect merged tiles' surrounding areas and count the final poly count
-   /// (after removing walls that face outside the mapS
+   /// (after removing walls that face outside the map etc)
    nPolys = setNeighbourAreas();
 
    /// Print final merged tiles
@@ -646,12 +648,6 @@ C_Map::saveGeometryToFile(const char *filename)
    for(unsigned int i = 0; i < mergedTiles.size(); i++) {
       /// For merged tile there are 5 polys
       /// 4 walls and 1 roof
-
-//      float maxX = bbox.maxX * tileSize;
-//      float minX = bbox.minX * tileSize;
-//
-//      float maxY = bbox.maxY * tileSize;
-//      float minY = bbox.minY * tileSize;
 
       /// Calculate vertices
       halfDims.u = mergedTiles[i].width * tileSize / 2.0f;
@@ -806,6 +802,113 @@ C_Map::saveGeometryToFile(const char *filename)
    assert(polysWriten == nPolys);
 
    fclose(fp);
+   printf("Done\n");
+   printf("*****\n");
+}
+
+void
+C_Map::saveAreasToFile(const char *filename)
+{
+	int nTiles = 0, x, y;
+	int nWalls = 0, nWalkables = 0;
+
+//   divideAreas();
+
+	FILE *fd = fopen(filename, "w");
+
+	if(!fd) {
+	   assert(0);
+		return;
+   }
+
+   /// Count all the NON VOID tiles
+	for(x = 0; x < TILES_ON_X; x++) {
+		for(y = 0; y < TILES_ON_Y; y++) {
+			if(tiles[x][y].getArea() != AREA_VOID) {
+				++nTiles;
+				if(tiles[x][y].getType() == TILE_WALL) {
+				   assert(tiles[x][y].getArea() == AREA_WALL);
+				   ++nWalls;
+            } else if(tiles[x][y].getType() == TILE_0) {
+               ++nWalkables;
+            }
+         }
+		}
+	}
+
+	printf("\n*****\n");
+   printf("Writing \"%s\"...\n", filename);
+   printf("\t%d non void tiles\n", nTiles);
+   printf("\t%d walls %d walkables\n", nWalls, nWalkables);
+
+	fprintf(fd, "%d\n", TILES_ON_X);			/// Save x dimension
+	fprintf(fd, "%d\n", TILES_ON_Y);			/// Save y dimension
+	fprintf(fd, "%d\n", nTiles);			/// Save how many tiles will be saved
+
+   /// Write 4 corner tiles
+   /// Lower left
+   x = 0; y = 0;
+   if(tiles[x][y].getArea() != AREA_VOID)
+      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), AREA_VOID, tiles[x][y+1].getArea(), tiles[x+1][y].getArea(), AREA_VOID);
+
+   /// Lower Right
+   x = TILES_ON_X - 1;
+   if(tiles[x][y].getArea() != AREA_VOID)
+      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x - 1][y].getArea(), tiles[x][y+1].getArea(), AREA_VOID, AREA_VOID);
+
+   /// Upper left
+   x = 0; y = TILES_ON_Y - 1;
+   if(tiles[x][y].getArea() != AREA_VOID)
+      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), AREA_VOID, AREA_VOID, tiles[x+1][y].getArea(), tiles[x][y-1].getArea());
+
+   /// Upper right
+   x = TILES_ON_X - 1;
+   if(tiles[x][y].getArea() != AREA_VOID)
+      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x - 1][y].getArea(), AREA_VOID, AREA_VOID, tiles[x][y-1].getArea());
+
+   /// Write lower row
+   y = 0;
+	for(x = 1; x < TILES_ON_X - 1; x++) {
+	   if(tiles[x][y].getArea() != AREA_VOID) {
+   	   fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x - 1][y].getArea(), tiles[x][y+1].getArea(), tiles[x+1][y].getArea(), AREA_VOID);
+      }
+   }
+
+   /// Write upper row
+   y = TILES_ON_Y - 1;
+	for(x = 1; x < TILES_ON_X - 1; x++) {
+	   if(tiles[x][y].getArea() != AREA_VOID) {
+   	   fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x - 1][y].getArea(), AREA_VOID, tiles[x+1][y].getArea(), tiles[x][y-1].getArea());
+      }
+   }
+
+   /// Write left column
+   x = 0;
+   for(y = 1; y < TILES_ON_Y - 1; ++y) {
+      if(tiles[x][y].getArea() != AREA_VOID) {
+   	   fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), AREA_VOID, tiles[x][y+1].getArea(), tiles[x+1][y].getArea(), tiles[x][y-1].getArea());
+      }
+   }
+
+   /// Write right column
+   x = TILES_ON_X - 1;
+   for(y = 1; y < TILES_ON_Y - 1; ++y) {
+      if(tiles[x][y].getArea() != AREA_VOID) {
+   	   fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x-1][y].getArea(), tiles[x][y+1].getArea(), AREA_VOID, tiles[x][y-1].getArea());
+      }
+   }
+
+   /// Write the rest of the map
+	for(x = 1; x < TILES_ON_X - 1; ++x) {
+		for(y = 1; y < TILES_ON_Y - 1; ++y) {
+         if(tiles[x][y].getArea() != AREA_VOID) {
+   	      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x-1][y].getArea(), tiles[x][y+1].getArea(), tiles[x+1][y].getArea(), tiles[x][y-1].getArea());
+         }
+		}
+   }
+
+   fclose(fd);
+
    printf("Done\n");
    printf("*****\n");
 }
