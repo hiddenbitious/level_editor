@@ -271,7 +271,7 @@ update(void)
      	/// Ctrl + m
       case 13:
          map->saveBspGeometryToFile("mapGeometry.bsp");
-         map->saveAreasToFile("mapAreas.txt");
+         map->saveMapAreasToFile("mapAreas.txt");
          break;
       }
 	}

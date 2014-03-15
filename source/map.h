@@ -4,15 +4,6 @@
 #include "globals.h"
 #include "tile.h"
 
-#define MAX_PARAMETER_LENGTH			256   /// Maximum length of a parameter.
-#define MAX_TILE_TYPES                8   /// Number of different tile types
-#define TILES_ON_X                   80
-#define TILES_ON_Y                   50
-
-#define MAX_TILE_TYPES                8   /// Number of different tile types
-#define TILES_ON_X                   80
-#define TILES_ON_Y                   50
-
 typedef struct {
    /// Tile's start coordinates
    int x, y;
@@ -39,7 +30,7 @@ public:
     */
    void saveBspGeometryToFile(const char *filename);
 
-   void saveAreasToFile(const char *filename);
+   void saveMapAreasToFile(const char *filename);
 
    /// All map tiles
    tile tiles[TILES_ON_X][TILES_ON_Y];

@@ -152,7 +152,7 @@ C_Map::readMap(const char *filename)
 		c = fscanf(fd, "%d", &tmp);	/// Read tile type
 		assert(_x < TILES_ON_X);
 		assert(_y < TILES_ON_Y);
-		assert(tmp <= MAX_TILE_TYPES);
+		assert(tmp < N_TILE_TYPES);
 
 		tiles[_x][_y].setType((tileTypes_t)tmp);
 		tiles[_x][_y].setCoordX(_x);
@@ -807,12 +807,10 @@ C_Map::saveBspGeometryToFile(const char *filename)
 }
 
 void
-C_Map::saveAreasToFile(const char *filename)
+C_Map::saveMapAreasToFile(const char *filename)
 {
 	int nTiles = 0, x, y;
 	int nWalls = 0, nWalkables = 0;
-
-//   divideAreas();
 
 	FILE *fd = fopen(filename, "w");
 
@@ -843,67 +841,10 @@ C_Map::saveAreasToFile(const char *filename)
 
 	fprintf(fd, "%d\n", TILES_ON_X);			/// Save x dimension
 	fprintf(fd, "%d\n", TILES_ON_Y);			/// Save y dimension
-	fprintf(fd, "%d\n", nTiles);			/// Save how many tiles will be saved
 
-   /// Write 4 corner tiles
-   /// Lower left
-   x = 0; y = 0;
-   if(tiles[x][y].getArea() != AREA_VOID)
-      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), AREA_VOID, tiles[x][y+1].getArea(), tiles[x+1][y].getArea(), AREA_VOID);
-
-   /// Lower Right
-   x = TILES_ON_X - 1;
-   if(tiles[x][y].getArea() != AREA_VOID)
-      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x - 1][y].getArea(), tiles[x][y+1].getArea(), AREA_VOID, AREA_VOID);
-
-   /// Upper left
-   x = 0; y = TILES_ON_Y - 1;
-   if(tiles[x][y].getArea() != AREA_VOID)
-      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), AREA_VOID, AREA_VOID, tiles[x+1][y].getArea(), tiles[x][y-1].getArea());
-
-   /// Upper right
-   x = TILES_ON_X - 1;
-   if(tiles[x][y].getArea() != AREA_VOID)
-      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x - 1][y].getArea(), AREA_VOID, AREA_VOID, tiles[x][y-1].getArea());
-
-   /// Write lower row
-   y = 0;
-	for(x = 1; x < TILES_ON_X - 1; x++) {
-	   if(tiles[x][y].getArea() != AREA_VOID) {
-   	   fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x - 1][y].getArea(), tiles[x][y+1].getArea(), tiles[x+1][y].getArea(), AREA_VOID);
-      }
-   }
-
-   /// Write upper row
-   y = TILES_ON_Y - 1;
-	for(x = 1; x < TILES_ON_X - 1; x++) {
-	   if(tiles[x][y].getArea() != AREA_VOID) {
-   	   fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x - 1][y].getArea(), AREA_VOID, tiles[x+1][y].getArea(), tiles[x][y-1].getArea());
-      }
-   }
-
-   /// Write left column
-   x = 0;
-   for(y = 1; y < TILES_ON_Y - 1; ++y) {
-      if(tiles[x][y].getArea() != AREA_VOID) {
-   	   fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), AREA_VOID, tiles[x][y+1].getArea(), tiles[x+1][y].getArea(), tiles[x][y-1].getArea());
-      }
-   }
-
-   /// Write right column
-   x = TILES_ON_X - 1;
-   for(y = 1; y < TILES_ON_Y - 1; ++y) {
-      if(tiles[x][y].getArea() != AREA_VOID) {
-   	   fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x-1][y].getArea(), tiles[x][y+1].getArea(), AREA_VOID, tiles[x][y-1].getArea());
-      }
-   }
-
-   /// Write the rest of the map
-	for(x = 1; x < TILES_ON_X - 1; ++x) {
-		for(y = 1; y < TILES_ON_Y - 1; ++y) {
-         if(tiles[x][y].getArea() != AREA_VOID) {
-   	      fprintf(fd, "%d %d %d %d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x-1][y].getArea(), tiles[x][y+1].getArea(), tiles[x+1][y].getArea(), tiles[x][y-1].getArea());
-         }
+	for(x = 0; x < TILES_ON_X; ++x) {
+		for(y = 0; y < TILES_ON_Y; ++y) {
+         fprintf(fd, "%d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x][y].getArea());
 		}
    }
 

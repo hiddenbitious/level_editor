@@ -3,6 +3,11 @@
 
 #include "globals.h"
 
+#define MAX_PARAMETER_LENGTH			256   /// Maximum length of a parameter.
+
+#define TILES_ON_X                   80
+#define TILES_ON_Y                   50
+
 #define NEIGHBOUR_LEFT                0
 #define NEIGHBOUR_RIGHT               1
 #define NEIGHBOUR_BELOW               2
