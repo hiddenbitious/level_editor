@@ -7,6 +7,8 @@
 
 C_Map::C_Map(void)
 {
+   dirty = false;
+
 	for(int x = 0; x < TILES_ON_X; x++) {
 		for(int y = 0; y < TILES_ON_Y; y++) {
 		   tiles[x][y].setCoordX(x);
@@ -78,42 +80,27 @@ C_Map::drawGrid(float tileSize)
 bool
 C_Map::saveMap(const char *filename)
 {
-	int nTiles = 0, x, y;
-	float tileSize = 10.0f;
+	int x, y;
 
 	FILE *fd = fopen(filename, "w");
 
-	if(!fd)
+	if(!fd) {
+	   assert(0);
 		return false;
+   }
 
-   /// Count tiles that either has a parameter or is not the default type
-	for(x = 0; x < TILES_ON_X; x++) {
-		for(y = 0; y < TILES_ON_Y; y++) {
-			if(tiles[x][y].getType() || tiles[x][y].hasParameter)
-				++nTiles;
-		}
-	}
-
-	fprintf(fd, "%d\n", TILES_ON_X);			/// Save x dimension
-	fprintf(fd, "%d\n", TILES_ON_Y);			/// Save y dimension
-	fprintf(fd, "%d\n", nTiles);			/// Save how many tiles will be saved
-	fprintf(fd, "%f\n", tileSize);		/// Save tile's dimensions
+	fprintf(fd, "%d\n", TILES_ON_X);			         /// Save x dimension
+	fprintf(fd, "%d\n", TILES_ON_Y);			         /// Save y dimension
+	fprintf(fd, "%d\n", TILES_ON_X * TILES_ON_Y);	/// Save how many tiles will be saved
 
 	for(x = 0; x < TILES_ON_X; x++) {
 		for(y = 0; y < TILES_ON_Y; y++) {
-		   /// Write only non zero tiles.
-			if(tiles[x][y].getType()) {
-				fprintf(fd, "%d %d %d", x, y, tiles[x][y].getType());
+         fprintf(fd, "%d %d %d %d", x, y, tiles[x][y].getType(), tiles[x][y].getArea());
 
-				if ( tiles[x][y].hasParameter )
-					fprintf(fd, " %s\n", tiles[x][y].getParameter().c_str());
-				else
-					fprintf(fd, "\n");
-			} else if(tiles[x][y].hasParameter) {
-      		/// And the empty tiles with a parameter
-				fprintf(fd, "%d %d %d", x, y, 0);
-				fprintf(fd, " %s\n", tiles[x][y].getParameter().c_str());
-			}
+         if(tiles[x][y].hasParameter)
+            fprintf(fd, " %s", tiles[x][y].getParameter().c_str());
+
+         fprintf(fd, "\n");
 		}
 	}
 
@@ -127,39 +114,44 @@ C_Map::saveMap(const char *filename)
 bool
 C_Map::readMap(const char *filename)
 {
-	int _xTiles, _yTiles, _tileSize, tmp, nTiles, _x, _y;
+	int _xTiles, _yTiles, type, area, nTiles, _x, _y;
 	int i, c, sum = 0;
 	char buf[MAX_PARAMETER_LENGTH];
 	int counters[N_TILE_TYPES] = {0};
 
 	FILE *fd;
 
-	if((fd = fopen(filename, "r")) == NULL)
+	if((fd = fopen(filename, "r")) == NULL) {
+	   assert(0);
 		return false;
+   }
 
 	fscanf(fd, "%d", &_xTiles);		/// Read size on x.
 	fscanf(fd, "%d", &_yTiles);		/// Read size on y.
 	fscanf(fd, "%d", &nTiles);		   /// Read number of tiles stored in file.
-	fscanf(fd, "%f", &_tileSize);	   /// Read tile size (not used).
 
    assert(_xTiles == TILES_ON_X);
    assert(_yTiles == TILES_ON_Y);
-   assert(nTiles <= TILES_ON_X * TILES_ON_Y);
+   assert(nTiles == TILES_ON_X * TILES_ON_Y);
 
 	for(i = 0; i < nTiles; i++) {
 		fscanf(fd, "%d", &_x);			/// Read x coords
 		fscanf(fd, "%d", &_y);			/// Read y coords
-		c = fscanf(fd, "%d", &tmp);	/// Read tile type
+		fscanf(fd, "%d", &type);	   /// Read tile type
+		c = fscanf(fd, "%d", &area);	/// Read tile area
+
 		assert(_x < TILES_ON_X);
 		assert(_y < TILES_ON_Y);
-		assert(tmp < N_TILE_TYPES);
+		assert(type < N_TILE_TYPES);
+		assert(area < N_AREA_TYPES);
 
-		tiles[_x][_y].setType((tileTypes_t)tmp);
+		tiles[_x][_y].setType((tileTypes_t)type);
+		tiles[_x][_y].setArea((areaTypes_t)area);
 		tiles[_x][_y].setCoordX(_x);
 		tiles[_x][_y].setCoordY(_y);
 
 		/// Count tiles
-		++counters[tmp];
+		++counters[type];
 		++sum;
 
    	/// There's a parameter. Read it.
@@ -169,7 +161,7 @@ C_Map::readMap(const char *filename)
 			tiles[_x][_y].setParameter(buf);
 		   /// One loop is lost everytime a parameter is read.
 			--i;
-         --counters[tmp];
+         --counters[type];
 		}
 	}
 
@@ -183,6 +175,8 @@ C_Map::readMap(const char *filename)
 	}
 	printf("\tTotal %d tiles\n", sum);
    printf("*****\n");
+
+   dirty = false;
 
 	return true;
 }
@@ -383,8 +377,24 @@ C_Map::floodFill(tile *startTile, areaTypes_t area)
 void
 C_Map::divideAreas(void)
 {
-   bool found = false;
    int x, y;
+
+   /// If the map is dirty reset tile areas
+   /// else there is nothing to be done
+   if(dirty) {
+      for(x = 0; x < TILES_ON_X; ++x) {
+         for(y = 0; y < TILES_ON_Y; ++y) {
+            if(tiles[x][y].getType() != TILE_WALL)
+               tiles[x][y].setArea(AREA_NAN);
+         }
+      }
+
+      dirty = false;
+   } else {
+      return;
+   }
+
+   bool found = false;
 
    /// Detect tiles that are 100% walkable. Hopefully these will be tha map start tiles
    /// (staircases, doors, or teleporters for remote map areas)
@@ -802,54 +812,6 @@ C_Map::saveBspGeometryToFile(const char *filename)
    assert(polysWriten == nPolys);
 
    fclose(fp);
-   printf("Done\n");
-   printf("*****\n");
-}
-
-void
-C_Map::saveMapAreasToFile(const char *filename)
-{
-	int nTiles = 0, x, y;
-	int nWalls = 0, nWalkables = 0;
-
-	FILE *fd = fopen(filename, "w");
-
-	if(!fd) {
-	   assert(0);
-		return;
-   }
-
-   /// Count all the NON VOID tiles
-	for(x = 0; x < TILES_ON_X; x++) {
-		for(y = 0; y < TILES_ON_Y; y++) {
-			if(tiles[x][y].getArea() != AREA_VOID) {
-				++nTiles;
-				if(tiles[x][y].getType() == TILE_WALL) {
-				   assert(tiles[x][y].getArea() == AREA_WALL);
-				   ++nWalls;
-            } else if(tiles[x][y].getType() == TILE_0) {
-               ++nWalkables;
-            }
-         }
-		}
-	}
-
-	printf("\n*****\n");
-   printf("Writing \"%s\"...\n", filename);
-   printf("\t%d non void tiles\n", nTiles);
-   printf("\t%d walls %d walkables\n", nWalls, nWalkables);
-
-	fprintf(fd, "%d\n", TILES_ON_X);			/// Save x dimension
-	fprintf(fd, "%d\n", TILES_ON_Y);			/// Save y dimension
-
-	for(x = 0; x < TILES_ON_X; ++x) {
-		for(y = 0; y < TILES_ON_Y; ++y) {
-         fprintf(fd, "%d %d %d %d\n", x, y, tiles[x][y].getType(), tiles[x][y].getArea());
-		}
-   }
-
-   fclose(fd);
-
    printf("Done\n");
    printf("*****\n");
 }

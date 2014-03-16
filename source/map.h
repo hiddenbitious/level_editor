@@ -23,14 +23,14 @@ public:
    void drawGrid(float tileSize);
    bool readMap(const char *filename);
    bool saveMap(const char *filename);
+   /// Is true when divideAreas() must be called again
+   bool dirty;
 
    /**
     * Writes to file the final geometry need to build the BSP tree
     * for the map
     */
    void saveBspGeometryToFile(const char *filename);
-
-   void saveMapAreasToFile(const char *filename);
 
    /// All map tiles
    tile tiles[TILES_ON_X][TILES_ON_Y];

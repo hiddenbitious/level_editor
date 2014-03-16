@@ -265,13 +265,8 @@ update(void)
 	   switch(keyPressed) {
    	/// Ctrl + s
 	   case 19:
-         map->saveMap("map.txt");
-         break;
-
-     	/// Ctrl + m
-      case 13:
          map->saveBspGeometryToFile("mapGeometry.bsp");
-         map->saveMapAreasToFile("mapAreas.txt");
+         map->saveMap("map.txt");
          break;
       }
 	}
@@ -307,6 +302,7 @@ update(void)
 			map->tiles[mouseTile_x][mouseTile_y].setCoordX(mouseTile_x);
 			map->tiles[mouseTile_x][mouseTile_y].setCoordY(mouseTile_y);
 			map->tiles[mouseTile_x][mouseTile_y].setType((tileTypes_t)tileSelection);
+			map->dirty = true;
 		}
 		break;
 
