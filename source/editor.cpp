@@ -268,6 +268,13 @@ update(void)
          map->saveBspGeometryToFile("mapGeometry.bsp");
          map->saveMap("map.txt");
          break;
+
+      /// Ctrl + c
+      case 3:
+      default:
+         printf("Clearing map.\n");
+         map->clearMap();
+         break;
       }
 	}
 

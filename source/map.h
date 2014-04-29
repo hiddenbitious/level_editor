@@ -23,6 +23,8 @@ public:
    void drawGrid(float tileSize);
    bool readMap(const char *filename);
    bool saveMap(const char *filename);
+   void clearMap(void);
+
    /// Is true when divideAreas() must be called again
    bool dirty;
 

@@ -182,6 +182,22 @@ C_Map::readMap(const char *filename)
 }
 
 void
+C_Map::clearMap(void)
+{
+	for(int x = 0; x < TILES_ON_X; x++) {
+		for(int y = 0; y < TILES_ON_Y; y++) {
+		   tiles[x][y].setCoordX(x);
+		   tiles[x][y].setCoordY(y);
+		   tiles[x][y].setArea(AREA_NAN);
+		   tiles[x][y].setType(TILE_0);
+		   tiles[x][y].hasParameter = false;
+		}
+	}
+
+	dirty = true;
+}
+
+void
 C_Map::secondPass(void)
 {
    vector<mergedTile_t>::iterator itx;
