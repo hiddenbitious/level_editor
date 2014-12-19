@@ -22,6 +22,7 @@ tile::tile(int _x, int _y)
 
 tile::~tile(void)
 {
+   parameter.clear();
 }
 
 void tile::setParameter(string param)
@@ -30,7 +31,7 @@ void tile::setParameter(string param)
 	if(param.size ()) {
 		if(isdigit(param[0])) {
 			hasParameter = false;
-			this->parameter.clear ();
+			this->parameter.clear();
 			return;
 		}
 
@@ -40,7 +41,7 @@ void tile::setParameter(string param)
       /// Remove new line characters
 		for(unsigned int i = 0; i < parameter.size(); i++) {
 			if(parameter[i] == '\n')
-				parameter.erase ( i , 1 );
+				parameter.erase(i, 1);
 		}
 	} else {
 		hasParameter = false;

@@ -27,13 +27,18 @@ public:
    bool dirty;
 
    /**
-    * Writes to file the final geometry need to build the BSP tree
+    * Writes to file the final geometry needed to build the BSP tree
     * for the map
     */
    void saveBspGeometryToFile(const char *filename);
 
    /// All map tiles
    tile tiles[TILES_ON_X][TILES_ON_Y];
+
+private:
+   /// Holds merged tiles after 1st and 2nd pass.
+   /// Used only to generate geometry
+   vector<mergedTile_t> mergedTiles;
 
    /**
     * Starting point of the merging algorithm.
@@ -42,11 +47,6 @@ public:
     */
    map_bbox_t mergeTiles(void);
 
-private:
-   /// Holds merged tiles after 1st and 2nd pass.
-   /// Used only to generate geometry
-   vector<mergedTile_t> mergedTiles;
-
    /**
     * Detects rows or columns of consecutive tiles and merges them into 1 block.
     * The merged tiles are stored in the mergedTiles vector
@@ -54,7 +54,7 @@ private:
    void firstPass(int x, int y, bool **visitedTiles);
 
    /**
-    * Runs a second pass on the merged tiles vector generated from the first pass.
+    * Runs a second pass on the mergedTiles vector generated from the first pass.
     * The purpose is to further merge tile rows with same width, or columns with same height
     * into rectangles.
     */
@@ -62,7 +62,7 @@ private:
 
    /**
     * Divide map into areas:
-    * Walkable (aka inside the map) and VOID
+    * Walkable (inside the map) and VOID
     */
    void divideAreas(void);
 
@@ -73,19 +73,20 @@ private:
    void floodFill(tile *startTile, areaTypes_t area);
 
    /**
-    * After merging tiles into blocks and after divinding the map into areas
+    * After merging tiles into blocks and after dividing the map into areas
     * this function detects the areas that surrounds each merged tile block.
-    * The purpose is to further reduce the polygon by removing the wall edges
-    * that are facing outside the map.
+    * The purpose is to further reduce the generated polygons by removing the
+    * wall edges that are facing outside the map.
     */
    int setNeighbourAreas(void);
 
    /**
-    * Swipes a merged tile's wall all neighbour tiles.
+    * Swipes a merged tile's wall all neighbor tiles.
     * If all tiles are VOID then this wall is considered to face outside the map
     * and VOID is returned, else if at least 1 WALLKABLE tile is found
     * the wall is considered to be facing inside the map
     */
    areaTypes_t detectAreaAcrossWall(mergedTile_t *tile, int neighbour);
 };
+
 #endif

@@ -243,7 +243,7 @@ drawPopUps(void)
    popUps->draw(mouse_x, mouse_y);
 }
 
-/// Update pop ups, tile updates etc
+/// Update pop ups, tiles and interpret pressed keys
 void
 update(void)
 {
@@ -277,7 +277,7 @@ update(void)
 			if(command.size())
 				command.erase(command.end() - 1);
 		}
-	   /// key is :     a char (a-z)(A-Z)              OR               a digit (0-9)            OR     spacebar
+	   /// key is :     a char (a-z)(A-Z)              OR               a digit (0-9)            OR     space bar
 		else if((keyPressed >= 97 && keyPressed <= 122) || (keyPressed <= 57 && keyPressed >= 48) || keyPressed == 32) {
 			command.push_back(keyPressed);
 		}
@@ -309,6 +309,7 @@ update(void)
 	case GLUT_RIGHT_BUTTON:
 			map->tiles[mouseTile_x][mouseTile_y].setType(TILE_0);
 			map->tiles[mouseTile_x][mouseTile_y].setParameter("");
+			map->dirty = true;
 			break;
 
 	case GLUT_MIDDLE_BUTTON:

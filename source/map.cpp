@@ -159,9 +159,10 @@ C_Map::readMap(const char *filename)
 		   /// fgets doesn't stop at white spaces but it stops at '\n'
 			fgets(buf, MAX_PARAMETER_LENGTH, fd);
 			tiles[_x][_y].setParameter(buf);
-		   /// One loop is lost everytime a parameter is read.
+		   /// One loop is lost every time a parameter is read.
 			--i;
          --counters[type];
+         --sum;
 		}
 	}
 
@@ -196,7 +197,7 @@ C_Map::secondPass(void)
             (*itx).height += (*ity).height;
             mergedTiles.erase(ity);
             --itx;
-         } /// Merge collums
+         } /// Merge columns
          else if((*itx).x + (*itx).width == (*ity).x &&
             (*itx).y == (*ity).y &&
             (*itx).height == (*ity).height) {
@@ -278,7 +279,7 @@ C_Map::mergeTiles(void)
          if(tiles[x][y].getType() == TILE_WALL && visitedTiles[x][y] == false)
             firstPass(x, y, visitedTiles);
 
-         /// While scanning all map tiles, it is a good oportunity
+         /// While scanning all map tiles, it is a good opportunity
          /// to calculate map's bounding box
          if(tiles[x][y].getType() == TILE_WALL) {
             if(x > bbox.maxX) bbox.maxX = x;
@@ -293,7 +294,7 @@ C_Map::mergeTiles(void)
    wallTiles2 = mergedTiles.size();
 
    /// Print merged tiles after 1st pass
-//   for(x = 0; x < mergedTiles.size(); ++x)
+//   for(x = 0; x < wallTiles2; ++x)
 //      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
 
    /// Try to merge the rows and columns into blocks
@@ -305,8 +306,7 @@ C_Map::mergeTiles(void)
 //      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
 
 
-   /// Find merged tiles' neighbours
-
+   /// Find merged tiles' neighbors
    printf("\n*****\n");
    printf("Map merged:\n");
    printf("\tInitial wall tiles: %d\n", wallTiles);
@@ -337,8 +337,6 @@ C_Map::floodFill(tile *startTile, areaTypes_t area)
 
       x = tmpTile->x;
       y = tmpTile->y;
-
-//      printf("(%d %d)\n", x, y);
 
       assert(x >= 0 && x < TILES_ON_X);
       assert(y >= 0 && y < TILES_ON_Y);
@@ -396,7 +394,7 @@ C_Map::divideAreas(void)
 
    bool found = false;
 
-   /// Detect tiles that are 100% walkable. Hopefully these will be tha map start tiles
+   /// Detect tiles that are 100% walkable. Hopefully these will be the map start tiles
    /// (staircases, doors, or teleporters for remote map areas)
    for(x = 0; x < TILES_ON_X && !found; ++x) {
       for(y = 0; y < TILES_ON_Y; ++y) {
@@ -411,7 +409,7 @@ C_Map::divideAreas(void)
    assert(found);
 
    /// After finding the tile perform a flood fill on it
-   printf("Start tile found at (%d, %d)\n", x, y);
+//   printf("Start tile found at (%d, %d)\n", x, y);
    floodFill(&tiles[x][y], AREA_WALKABLE);
 
 //   printf("\n*****\nWalkable tiles:\n");
@@ -438,7 +436,7 @@ C_Map::divideAreas(void)
    assert(found);
 
    /// After finding the tile perform a flood fill on it
-   printf("Found one AREA_VOID tile at (%d, %d)\n", x, y);
+//   printf("Found one AREA_VOID tile at (%d, %d)\n", x, y);
    floodFill(&tiles[x][y], AREA_VOID);
 
 //   printf("\n*****\nVoid tiles:\n");
@@ -452,7 +450,7 @@ C_Map::divideAreas(void)
 }
 
 /**
- * Swipes a merged tile's wall all neighbour tiles.
+ * Swipes a merged tile's wall all neighbor tiles.
  * If all tiles are AREA_VOID then this wall is considered to face outside the map
  * and AREA_VOID is returned, else if at least 1 WALLKABLE tile is found
  * the wall is considered to be facing inside the map
@@ -529,13 +527,15 @@ C_Map::detectAreaAcrossWall(mergedTile_t *tile, int neighbour)
       break;
    }
 
+   assert(area != AREA_NAN);
+
    done:
    return area != AREA_NAN ? area : AREA_VOID;
 }
 
 /**
- * For each merged tile, detects it's neighbour areas.
- * According to the areas found it also counts the number of polygons
+ * For each merged tile, detects it's neighbor areas.
+ * According to the areas found it also counts the number of polygons.
  */
 int
 C_Map::setNeighbourAreas(void)
@@ -546,16 +546,12 @@ C_Map::setNeighbourAreas(void)
    int nPolys = mergedTiles.size() * 5;
    int x, y;
 
-   assert(nPolys);
-
-   /// Loop through merged tiles and set their neighbour areas
+   /// Loop through merged tiles and set their neighbor areas
    for(unsigned int i = 0; i < mergedTiles.size(); i++) {
       x = mergedTiles[i].x;
       y = mergedTiles[i].y;
-      if(x == 1 && y == 12)
-         printf("wtf\n");
 
-      /// Check left neigbhour
+      /// Check left neighbor
       if(x > 0) {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_LEFT);
       } else {
@@ -565,7 +561,7 @@ C_Map::setNeighbourAreas(void)
          mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT] == AREA_WALL)
          --nPolys;
 
-      /// Check right neigbhour
+      /// Check right neighbor
       if(x + mergedTiles[i].width < TILES_ON_X - 1) {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_RIGHT);
       } else {
@@ -575,7 +571,7 @@ C_Map::setNeighbourAreas(void)
          mergedTiles[i].neighbourAreas[NEIGHBOUR_RIGHT] == AREA_WALL)
          --nPolys;
 
-      /// Check neigbhour below
+      /// Check neighbor below
       if(y > 0) {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_BELOW);
       } else {
@@ -585,7 +581,7 @@ C_Map::setNeighbourAreas(void)
          mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == AREA_WALL)
          --nPolys;
 
-      /// Check neigbhour above
+      /// Check neighbor above
       if(y + mergedTiles[i].height < TILES_ON_Y - 1) {
          mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] = detectAreaAcrossWall(&mergedTiles[i], NEIGHBOUR_ABOVE);
       } else {
@@ -595,7 +591,7 @@ C_Map::setNeighbourAreas(void)
          mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == AREA_WALL)
          --nPolys;
 
-      /// If at least one neighbour area is AREA_VOID then the roof is omited
+      /// If at least one neighbor area is AREA_VOID then the roof is omitted
       if(mergedTiles[i].neighbourAreas[NEIGHBOUR_ABOVE] == AREA_VOID ||
          mergedTiles[i].neighbourAreas[NEIGHBOUR_BELOW] == AREA_VOID ||
          mergedTiles[i].neighbourAreas[NEIGHBOUR_LEFT]  == AREA_VOID ||
@@ -631,12 +627,12 @@ C_Map::saveBspGeometryToFile(const char *filename)
    nPolys = setNeighbourAreas();
 
    /// Print final merged tiles
-   printf("\n\n");
-   for(int x = 0; x < mergedTiles.size(); ++x) {
-      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
-      printf("   %d %d %d %d\n", mergedTiles[x].neighbourAreas[NEIGHBOUR_LEFT], mergedTiles[x].neighbourAreas[NEIGHBOUR_ABOVE],
-                                 mergedTiles[x].neighbourAreas[NEIGHBOUR_RIGHT], mergedTiles[x].neighbourAreas[NEIGHBOUR_BELOW]);
-   }
+//   printf("\n\n");
+//   for(int x = 0; x < mergedTiles.size(); ++x) {
+//      printf("%d: (%d, %d): %d x %d\n", x, mergedTiles[x].x, mergedTiles[x].y, mergedTiles[x].width, mergedTiles[x].height);
+//      printf("   %d %d %d %d\n", mergedTiles[x].neighbourAreas[NEIGHBOUR_LEFT], mergedTiles[x].neighbourAreas[NEIGHBOUR_ABOVE],
+//                                 mergedTiles[x].neighbourAreas[NEIGHBOUR_RIGHT], mergedTiles[x].neighbourAreas[NEIGHBOUR_BELOW]);
+//   }
 
    printf("\n*****\n");
    printf("Writing \"%s\"...\n", filename);
