@@ -106,7 +106,7 @@ C_Map::saveMap(const char *filename)
 
 	fclose(fd);
 
-	printf("map saved.\n");
+	printf("Saved %s.\n", filename);
 
 	return true;
 }

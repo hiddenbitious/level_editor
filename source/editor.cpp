@@ -28,9 +28,12 @@ int tileSelection = TILE_WALL;				/// Default tile type
 vector<string> options;					      /// Text for the popUp.
 
 /// When entering a command set this to true
-bool enterCommand = false;
-bool showCommand = false;
+bool enterCommand    = false;
+bool showCommand     = false;
+bool enterFilename   = false;
+bool showFilename    = false;
 string command;
+string filename;
 
 /// Window dimensions
 int windowSize_x = 800;
@@ -265,9 +268,33 @@ update(void)
 	   switch(keyPressed) {
    	/// Ctrl + s
 	   case 19:
-         map->saveBspGeometryToFile("mapGeometry.bsp");
-         map->saveMap("map.txt");
+	      enterFilename = true;
          break;
+      }
+	}
+
+	if(enterFilename) {
+      if(keyPressed == 8) {
+         if(filename.size())
+            filename.erase(filename.end() - 1);
+      }
+      /// key is :     a char (a-z)(A-Z)              OR               a digit (0-9)            OR     dot
+      else if((keyPressed >= 97 && keyPressed <= 122) || (keyPressed <= 57 && keyPressed >= 48) || keyPressed == '.') {
+         filename.push_back(keyPressed);
+      }
+      /// Enter
+      else if(keyPressed == 13) {
+         enterFilename = false;
+      }
+
+      if(enterFilename == false) {
+         string bspFilename = filename;
+         bspFilename.append(".bsp\0");
+         filename.append(".txt\0");
+
+         map->saveBspGeometryToFile(bspFilename.c_str());
+         map->saveMap(filename.c_str());
+         filename.erase();
       }
 	}
 
@@ -451,9 +478,13 @@ Draw(void)
 	glEnd();
 
    /// Print what the user is typing
-	if(enterCommand || showCommand) {
+	if(enterCommand || showCommand || enterFilename) {
 		glColor3f(0.0f, 0.0f, 0.0f);
-		glPrint(22 * tileSize, TILES_ON_Y * tileSize + 2, "Parameter: %s", command.c_str());
+		if(enterCommand) {
+   		glPrint(22 * tileSize, TILES_ON_Y * tileSize + 2, "Parameter: %s", command.c_str());
+		} else {
+   		glPrint(22 * tileSize, TILES_ON_Y * tileSize + 2, "File name: %s", filename.c_str());
+		}
 	}
 
    /// Prints a pop up under mouse with parameter for a tile
