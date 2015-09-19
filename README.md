@@ -12,11 +12,13 @@ Controls:
 - Ctrl + left mouse button enters a comment to a tile
 - Ctrl + s saves map
 
-Uses OpenGL + glut for rendering the map and the text so i supposed it can be considered as cross platform. 
+Uses OpenGL + glut for rendering the map and the text so i supposed it can be considered as cross platform.
 For now the map size is fixed at 80 x 50 tiles.
 
-The editor is mainly designed to generate 3D geometry of the map so it can be used for a 3D fps 
+The editor is mainly designed to generate 3D geometry of the map so it can be used for a 3D fps
 rogue like / dungeon crawling game. Various optimizations are applied in order to discard redundant geometry.
 
 TODO:
 Use cegui (http://cegui.org.uk/) to create a rich user interface.
+
+**Screenshots**: (https://www.dropbox.com/s/jcciq9mlkigqu87/editor2.png?dl=0) (https://www.dropbox.com/s/1r8yrbr949erbqr/editor.png?dl=0)
