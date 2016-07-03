@@ -14,9 +14,9 @@
 #define NEIGHBOUR_ABOVE               3
 
 typedef enum {AREA_NAN,          /// 0 Not categorized yet
-              AREA_VOID,         /// 1
-              AREA_WALKABLE,     /// 2
-              AREA_WALL,         /// 3
+              AREA_VOID,         /// 1 Outside the map
+              AREA_WALKABLE,     /// 2 Inside the map and walkable
+              AREA_WALL,         /// 3 Wall
 
               N_AREA_TYPES} areaTypes_t;
 
@@ -46,8 +46,8 @@ static const float selections[N_TILE_TYPES + 1][3] = { {1.0f,	0.0f,	0.0f},	// Wa
 class tile
 {
 private:
-	tileTypes_t type;	/// tile's type
-	string parameter;	/// parameter saved to/read from file
+	tileTypes_t type;	      /// tile's type
+	string      parameter;	/// parameter saved to/read from file
 	areaTypes_t area;
 
 public:
@@ -55,20 +55,20 @@ public:
 	tile(int x, int y);
 	~tile(void);
 
-	int x, y;			/// coordinates
+	int x, y;			      /// coordinates
 
 	bool hasParameter;
 	void setParameter(string param);
 
 	void draw(float tileSize);
 
-   inline void setCoordX(int x) { this->x = x; }
-   inline void setCoordY(int y) { this->y = y; }
-   inline void setType(tileTypes_t type) { this->type = type; area = (type == TILE_WALL) ? AREA_WALL : AREA_NAN; }
-   inline tileTypes_t getType(void) { return this->type; }
-   inline void setArea(areaTypes_t area){ this->area = area; }
-   inline areaTypes_t getArea(void) { return this->area; }
-   inline string getParameter(void) { return this->parameter; }
+   inline void setCoordX(int x)           { this->x = x; }
+   inline void setCoordY(int y)           { this->y = y; }
+   inline void setType(tileTypes_t type)  { this->type = type; area = (type == TILE_WALL) ? AREA_WALL : AREA_NAN; }
+   inline tileTypes_t getType(void)       { return type; }
+   inline void setArea(areaTypes_t area)  { this->area = area; }
+   inline areaTypes_t getArea(void)       { return area; }
+   inline string getParameter(void)       { return parameter; }
 };
 
 #endif
