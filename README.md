@@ -21,5 +21,5 @@ It contains the generated map's geometry.
 These two files are loaded by the from_scratch engine (https://github.com/hiddenbitious/from_scratch).
 
 **Screenshots**:
-![Screenshot 1](https://www.dropbox.com/s/jcciq9mlkigqu87/editor2.png?dl=0)
-![Screenshot 2](https://www.dropbox.com/s/1r8yrbr949erbqr/editor.png?dl=0)
+![Screenshot 1](https://github.com/hiddenbitious/level_editor/blob/simplerBspGeometry/sc1.png)
+![Screenshot 2](https://github.com/hiddenbitious/level_editor/blob/simplerBspGeometry/sc2.png)
