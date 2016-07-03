@@ -20,4 +20,6 @@ It contains the generated map's geometry.
 
 These two files are loaded by the from_scratch engine (https://github.com/hiddenbitious/from_scratch).
 
-**Screenshots**: (https://www.dropbox.com/s/jcciq9mlkigqu87/editor2.png?dl=0) (https://www.dropbox.com/s/1r8yrbr949erbqr/editor.png?dl=0)
+**Screenshots**:
+![Screenshot 1](https://www.dropbox.com/s/jcciq9mlkigqu87/editor2.png?dl=0)
+![Screenshot 2](https://www.dropbox.com/s/1r8yrbr949erbqr/editor.png?dl=0)
